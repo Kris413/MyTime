@@ -2,19 +2,21 @@ let currentPeriod = 'today';
 let customDate    = null;
 let settings      = { limits: {}, apiKey: '' };
 
+const SHOW_LIMIT = 5;
+
 const PERIOD_LABELS = {
   today: '今日总计', week: '本周总计',
   month: '本月总计', year: '今年总计', custom: '指定日期',
 };
 
 const LIMIT_OPTIONS = [
-  { label: '不限制', value: 0 },
-  { label: '30 分钟', value: 1800 },
-  { label: '1 小时',  value: 3600 },
+  { label: '不限制',   value: 0 },
+  { label: '30 分钟',  value: 1800 },
+  { label: '1 小时',   value: 3600 },
   { label: '1.5 小时', value: 5400 },
-  { label: '2 小时',  value: 7200 },
-  { label: '3 小时',  value: 10800 },
-  { label: '4 小时',  value: 14400 },
+  { label: '2 小时',   value: 7200 },
+  { label: '3 小时',   value: 10800 },
+  { label: '4 小时',   value: 14400 },
 ];
 
 // ── Format ────────────────────────────────────────────────────────────────────
@@ -29,7 +31,7 @@ function padRank(n) { return String(n).padStart(2, '0'); }
 
 // ── Limit helpers ─────────────────────────────────────────────────────────────
 
-function getLimit(cat)        { return settings.limits[cat] || null; }
+function getLimit(cat)       { return settings.limits[cat] || null; }
 function catStatus(cat, sec) {
   const limit = getLimit(cat), threshold = limit || OVER_LIMIT_SECONDS;
   if (sec >= threshold) return 'over';
@@ -197,10 +199,26 @@ function renderInsight(catData, prevMap) {
   else card.style.display = 'none';
 }
 
-function animateFills() {
+// Animate chart bars (only visible rows get staggered; extra rows get width set instantly)
+function animateChartFills() {
   requestAnimationFrame(() => {
-    document.querySelectorAll('[data-w]').forEach((el, i) => {
-      setTimeout(() => { el.style.width = el.dataset.w; }, i * 55);
+    let idx = 0;
+    document.querySelectorAll('.chart-fill[data-w]').forEach(el => {
+      const isExtra = !!el.closest('.chart-row.extra');
+      const delay   = isExtra ? 0 : idx++ * 90;
+      setTimeout(() => { el.style.width = el.dataset.w; }, delay);
+    });
+  });
+}
+
+// Animate site bars (independent stagger from chart)
+function animateSiteFills() {
+  requestAnimationFrame(() => {
+    let idx = 0;
+    document.querySelectorAll('.site-bar-fill[data-w]').forEach(el => {
+      const isExtra = !!el.closest('.site-row.extra');
+      const delay   = isExtra ? 0 : idx++ * 90;
+      setTimeout(() => { el.style.width = el.dataset.w; }, delay);
     });
   });
 }
@@ -208,70 +226,132 @@ function animateFills() {
 function renderChart(catData, prevMap) {
   const el = document.getElementById('chart');
   if (!catData.length) { el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
-  const maxSec = catData[0][1];
-  el.innerHTML = `<div class="chart-rows">${
-    catData.map(([cat, sec], i) => {
-      const color    = getCategoryColor(cat);
-      const pct      = Math.round((sec / maxSec) * 100);
-      const limit    = getLimit(cat);
-      const status   = catStatus(cat, sec);
-      const limitPct = limit ? Math.min(Math.round((limit / maxSec) * 100), 100) : null;
-      const prev     = prevMap[cat];
-      const trendHtml = (prev && prev >= 60 && Math.abs((sec-prev)/prev) >= 0.05)
-        ? `<span class="trend">${sec>prev?'↑':'↓'}${Math.round(Math.abs(sec-prev)/prev*100)}%</span>` : '';
-      const badge     = status==='over' ? '<span class="over-badge">超时</span>'
-        : status==='near' ? '<span class="near-badge">接近</span>' : '';
-      const limitLabel = limit ? `<span class="limit-text"> / ${formatTime(limit)}</span>` : '';
-      return `
-        <div class="chart-row ${status !== 'ok' ? status : ''}">
-          <div class="chart-rank">${padRank(i+1)}</div>
-          <div class="chart-label">${cat}</div>
-          <div class="chart-track">
-            <div class="chart-fill" style="width:0;background:${color}" data-w="${pct}%"></div>
-            ${limitPct !== null ? `<div class="limit-marker" style="left:${limitPct}%"></div>` : ''}
-          </div>
-          <div class="chart-meta">
-            <div class="chart-time">${formatTime(sec)}${limitLabel}</div>
-            <div class="chart-bottom">${trendHtml}${badge}</div>
-          </div>
-        </div>`;
-    }).join('')
-  }</div>`;
-  animateFills();
+
+  const maxSec  = catData[0][1];
+  const hasMore = catData.length > SHOW_LIMIT;
+
+  const rows = catData.map(([cat, sec], i) => {
+    const color     = getCategoryColor(cat);
+    const pct       = Math.round((sec / maxSec) * 100);
+    const limit     = getLimit(cat);
+    const status    = catStatus(cat, sec);
+    const limitPct  = limit ? Math.min(Math.round((limit / maxSec) * 100), 100) : null;
+    const prev      = prevMap[cat];
+    const trendHtml = (prev && prev >= 60 && Math.abs((sec-prev)/prev) >= 0.05)
+      ? `<span class="trend">${sec>prev?'↑':'↓'}${Math.round(Math.abs(sec-prev)/prev*100)}%</span>` : '';
+    const badge     = status==='over' ? '<span class="over-badge">超时</span>'
+      : status==='near' ? '<span class="near-badge">接近</span>' : '';
+    const limitLabel = limit ? `<span class="limit-text"> / ${formatTime(limit)}</span>` : '';
+    const extraClass = i >= SHOW_LIMIT ? ' extra' : '';
+
+    return `
+      <div class="chart-row ${status !== 'ok' ? status : ''}${extraClass}">
+        <div class="chart-rank">${padRank(i+1)}</div>
+        <div class="chart-label">${cat}</div>
+        <div class="chart-track">
+          <div class="chart-fill" style="width:0;background:${color}" data-w="${pct}%"></div>
+          ${limitPct !== null ? `<div class="limit-marker" style="left:${limitPct}%"></div>` : ''}
+        </div>
+        <div class="chart-meta">
+          <div class="chart-time">${formatTime(sec)}${limitLabel}</div>
+          <div class="chart-bottom">${trendHtml}${badge}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const moreBtn = hasMore
+    ? `<button class="show-more-btn">展开全部 ${catData.length} 个类别</button>`
+    : '';
+
+  el.innerHTML = `<div class="chart-rows">${rows}</div>${moreBtn}`;
+
+  if (hasMore) {
+    const btn  = el.querySelector('.show-more-btn');
+    const rowsEl = el.querySelector('.chart-rows');
+    btn.addEventListener('click', () => {
+      const expanded = rowsEl.classList.toggle('expanded');
+      btn.textContent = expanded ? '收起' : `展开全部 ${catData.length} 个类别`;
+    });
+  }
+
+  animateChartFills();
 }
 
 function renderSites(domains) {
   const el     = document.getElementById('sites');
-  const sorted = Object.entries(domains).sort((a,b)=>b[1].seconds-a[1].seconds).slice(0,20);
+  const sorted = Object.entries(domains).sort((a,b) => b[1].seconds - a[1].seconds);
   if (!sorted.length) { el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
-  const maxSec = sorted[0][1].seconds;
-  el.innerHTML = `<div class="site-rows">${
-    sorted.map(([domain, { category, seconds }], i) => {
-      const color = getCategoryColor(category);
-      const pct   = Math.round((seconds / maxSec) * 100);
-      return `
-        <div class="site-row">
-          <div class="site-rank">${padRank(i+1)}</div>
-          <div class="site-info">
-            <div class="site-domain">${domain}</div>
-            <div class="site-cat">${category}</div>
-          </div>
-          <div class="site-bar-track">
-            <div class="site-bar-fill" style="width:0;background:${color}" data-w="${pct}%"></div>
-          </div>
-          <div class="site-time">${formatTime(seconds)}</div>
-        </div>`;
-    }).join('')
-  }</div>`;
-  animateFills();
+
+  const maxSec  = sorted[0][1].seconds;
+  const hasMore = sorted.length > SHOW_LIMIT;
+
+  const rows = sorted.map(([domain, { category, seconds }], i) => {
+    const color      = getCategoryColor(category);
+    const pct        = Math.round((seconds / maxSec) * 100);
+    const extraClass = i >= SHOW_LIMIT ? ' extra' : '';
+    return `
+      <div class="site-row${extraClass}">
+        <div class="site-rank">${padRank(i+1)}</div>
+        <div class="site-info">
+          <div class="site-domain">${domain}</div>
+          <div class="site-cat">${category}</div>
+        </div>
+        <div class="site-bar-track">
+          <div class="site-bar-fill" style="width:0;background:${color}" data-w="${pct}%"></div>
+        </div>
+        <div class="site-time">${formatTime(seconds)}</div>
+      </div>`;
+  }).join('');
+
+  const moreBtn = hasMore
+    ? `<button class="show-more-btn">展开全部 ${sorted.length} 个网站</button>`
+    : '';
+
+  el.innerHTML = `<div class="site-rows">${rows}</div>${moreBtn}`;
+
+  if (hasMore) {
+    const btn    = el.querySelector('.show-more-btn');
+    const rowsEl = el.querySelector('.site-rows');
+    btn.addEventListener('click', () => {
+      const expanded = rowsEl.classList.toggle('expanded');
+      btn.textContent = expanded ? '收起' : `展开全部 ${sorted.length} 个网站`;
+    });
+  }
+
+  animateSiteFills();
 }
 
 // ── AI Analysis ───────────────────────────────────────────────────────────────
 
+function renderAIContent(text) {
+  if (!text) return '';
+  const lines = text.trim().split('\n').filter(l => l.trim());
+  const parts = [];
+  const introLines = [];
+
+  for (const line of lines) {
+    const t = line.trim();
+    // Detect numbered points: ①②③ or 1. 2. 1、 etc.
+    if (/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(t) || /^\d+[.、：]/.test(t)) {
+      if (introLines.length) {
+        parts.push(`<p class="ai-intro">${introLines.join('<br>')}</p>`);
+        introLines.length = 0;
+      }
+      parts.push(`<div class="ai-point">${t}</div>`);
+    } else {
+      introLines.push(t);
+    }
+  }
+  if (introLines.length) {
+    parts.push(`<p class="ai-intro">${introLines.join('<br>')}</p>`);
+  }
+  return `<div class="ai-content">${parts.join('')}</div>`;
+}
+
 async function runAIAnalysis(type) {
   const resultEl = document.getElementById('aiResult');
   document.querySelectorAll('.ai-btn').forEach(b => b.disabled = true);
-  resultEl.innerHTML = '<div class="ai-empty">生成中…</div>';
+  resultEl.innerHTML = '<div class="ai-empty">生成中，稍等…</div>';
 
   const period = type === 'week' ? 'week' : 'month';
   const [domains, prevDomains] = await Promise.all([
@@ -283,14 +363,21 @@ async function runAIAnalysis(type) {
   const prevMap = aggregateByCategoryMap(prevDomains);
   const topSites = Object.entries(
     Object.fromEntries(Object.entries(
-      await (async () => { const d = {}; for (const k of getDateKeys(period,0)) { const r = await chrome.storage.local.get(k); Object.assign(d, r[k] || {}); } return d; })()
-    ).sort((a,b)=>b[1].seconds-a[1].seconds).slice(0,5)
+      await (async () => {
+        const d = {};
+        for (const k of getDateKeys(period, 0)) {
+          const r = await chrome.storage.local.get(k);
+          Object.assign(d, r[k] || {});
+        }
+        return d;
+      })()
+    ).sort((a,b) => b[1].seconds - a[1].seconds).slice(0, 5)
   ));
 
   const now   = new Date();
   const label = type === 'week'
     ? `${new Date(now.getFullYear(),now.getMonth(),now.getDate()-6).toLocaleDateString('zh-CN',{month:'long',day:'numeric'})}—${now.toLocaleDateString('zh-CN',{month:'long',day:'numeric'})}`
-    : now.toLocaleDateString('zh-CN',{year:'numeric',month:'long'});
+    : now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' });
 
   const messages = type === 'week'
     ? buildWeeklyMessages(catData, topSites, prevMap, settings.limits, label)
@@ -312,7 +399,7 @@ async function runAIAnalysis(type) {
       <span class="ai-type-badge">${typeLabel}</span>
       <span class="ai-date">${label} · ${time} 生成</span>
     </div>
-    <div>${content}</div>`;
+    ${renderAIContent(content)}`;
 
   document.querySelectorAll('.ai-btn').forEach(b => b.disabled = false);
 }
@@ -324,7 +411,6 @@ document.querySelectorAll('.ai-btn').forEach(btn => {
 // ── Main refresh ──────────────────────────────────────────────────────────────
 
 async function refresh() {
-  // Fade hero number during transition
   const heroEl = document.getElementById('totalTime');
   heroEl.classList.add('fading');
 

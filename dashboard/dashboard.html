@@ -8,13 +8,16 @@
 </head>
 <body>
   <header class="header">
-    <div class="logo">MyTime</div>
+    <div class="logo">
+      <div class="logo-icon">M</div>
+      <span class="logo-name">MyTime</span>
+    </div>
     <button class="btn-settings" id="openSettings">
       <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="10" cy="10" r="2.5"/>
         <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42"/>
       </svg>
-      上限设置
+      设置
     </button>
   </header>
 
@@ -43,52 +46,66 @@
       <div class="insight-text" id="insightText"></div>
     </div>
 
-    <section class="hero-card">
-      <div class="hero-period" id="heroPeriod">今日总计</div>
-      <div class="hero-time" id="totalTime">—</div>
-      <div class="hero-divider"></div>
-      <div class="hero-meta">
-        <div class="hero-meta-item">
-          <div class="hero-meta-value" id="totalCats">—</div>
-          <div class="hero-meta-label">活跃类别</div>
-        </div>
-        <div class="hero-meta-sep"></div>
-        <div class="hero-meta-item">
-          <div class="hero-meta-value" id="totalSites">—</div>
-          <div class="hero-meta-label">访问网站</div>
-        </div>
-        <div class="hero-meta-sep" id="overSep" style="display:none"></div>
-        <div class="hero-meta-item" id="overItem" style="display:none">
-          <div class="hero-meta-value warn" id="overCount">—</div>
-          <div class="hero-meta-label">超出上限</div>
-        </div>
+    <div class="layout-grid">
+
+      <!-- Left column -->
+      <div class="col-left">
+
+        <section class="hero-card">
+          <div class="hero-period" id="heroPeriod">今日总计</div>
+          <div class="hero-time" id="totalTime">—</div>
+          <div class="hero-divider"></div>
+          <div class="hero-meta">
+            <div class="hero-meta-item">
+              <div class="hero-meta-value" id="totalCats">—</div>
+              <div class="hero-meta-label">活跃类别</div>
+            </div>
+            <div class="hero-meta-sep"></div>
+            <div class="hero-meta-item">
+              <div class="hero-meta-value" id="totalSites">—</div>
+              <div class="hero-meta-label">访问网站</div>
+            </div>
+            <div class="hero-meta-sep" id="overSep" style="display:none"></div>
+            <div class="hero-meta-item" id="overItem" style="display:none">
+              <div class="hero-meta-value warn" id="overCount">—</div>
+              <div class="hero-meta-label">超出上限</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <div class="card-label">类别分布</div>
+          </div>
+          <div id="chart"><div class="empty">暂无数据</div></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <div class="card-label">网站详情</div>
+          </div>
+          <div id="sites"><div class="empty">暂无数据</div></div>
+        </section>
+
       </div>
-    </section>
 
-    <section class="card">
-      <div class="card-title">类别分布</div>
-      <div id="chart"><div class="empty">暂无数据</div></div>
-    </section>
-
-    <section class="card">
-      <div class="card-title">网站详情</div>
-      <div id="sites"><div class="empty">暂无数据</div></div>
-    </section>
-
-    <!-- AI Analysis -->
-    <section class="card ai-section">
-      <div class="ai-header">
-        <div class="card-title" style="margin:0">AI 分析</div>
-        <div class="ai-btns">
-          <button class="ai-btn" data-type="week">生成周报</button>
-          <button class="ai-btn" data-type="month">生成月报</button>
-        </div>
+      <!-- Right column -->
+      <div class="col-right">
+        <section class="card ai-section">
+          <div class="card-head">
+            <div class="card-label">AI 分析</div>
+            <div class="ai-btns">
+              <button class="ai-btn" data-type="week">生成周报</button>
+              <button class="ai-btn" data-type="month">生成月报</button>
+            </div>
+          </div>
+          <div class="ai-result" id="aiResult">
+            <div class="ai-empty">选择周报或月报<br>生成 AI 分析</div>
+          </div>
+        </section>
       </div>
-      <div class="ai-result" id="aiResult">
-        <div class="ai-empty">选择周报或月报生成 AI 分析</div>
-      </div>
-    </section>
 
+    </div>
   </main>
 
   <!-- Settings Modal -->
@@ -106,13 +123,11 @@
         </button>
       </div>
       <div class="modal-body">
-        <!-- API Key -->
         <div class="api-section">
           <div class="api-label">Qwen API Key <span class="api-opt">（可选）</span></div>
           <div class="api-hint">填写后直连 API；留空则使用共享代理</div>
           <input type="password" class="api-input" id="apiKeyInput" placeholder="sk-...">
         </div>
-        <!-- Limits -->
         <div class="limits-title">每日时长上限</div>
         <div id="limitsList"></div>
       </div>

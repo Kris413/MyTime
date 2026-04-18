@@ -6,9 +6,10 @@ const AI_PROXY_TOKEN = 'mytime-proxy-k1';
 const AI_QWEN_URL    = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
 const AI_MODEL       = 'qwen-plus';
 
-const AI_SYSTEM_PROMPT = `你是一个浏览时间分析助手，帮用户了解上网习惯并给出改善建议。
-规则：中文回答；语气友好但直接；用数据说话，不说废话；总字数控制在220字以内；
-使用带序号的分点格式，每点不超过2句话。`;
+const AI_SYSTEM_PROMPT = `你是用户的私人时间观察员，帮他看看这段时间的上网情况。
+说话风格：像朋友发消息，轻松自然，不要端着；可以带点自己的观察和小吐槽，但别说教；
+偶尔用「哈」「嗯」「说实话」「不过嘛」这类口语；数据说话，不废话；
+中文，总字数控制在200字以内；分点写，用①②③④标号，每点1-2句。`;
 
 function aiFormatTime(s) {
   if (s < 60) return `${s}秒`;
