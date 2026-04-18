@@ -1,11 +1,12 @@
 let currentPeriod = 'today';
+let customDate = null; // YYYY-MM-DD string when period === 'custom'
 
 function formatTime(seconds) {
-  if (seconds < 60) return `${seconds}秒`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}分`;
+  if (seconds < 60) return '< 1分钟';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}分钟`;
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  return m > 0 ? `${h}小时${m}分钟` : `${h}小时`;
 }
 
 function getDateKeys(period) {
@@ -33,6 +34,8 @@ function getDateKeys(period) {
         keys.push(`${y}-${String(mo + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
       }
     }
+  } else if (period === 'custom' && customDate) {
+    keys.push(customDate);
   }
 
   return keys;
@@ -40,6 +43,7 @@ function getDateKeys(period) {
 
 async function loadDomains(period) {
   const keys = getDateKeys(period);
+  if (!keys.length) return {};
   const stored = await chrome.storage.local.get(keys);
   const domains = {};
   for (const dayData of Object.values(stored)) {
@@ -137,16 +141,34 @@ async function refresh() {
   renderSites(domains);
 }
 
+// ── Period tabs ──
 document.querySelectorAll('.period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelector('.period-btn.active').classList.remove('active');
     btn.classList.add('active');
     currentPeriod = btn.dataset.period;
+
+    const picker = document.getElementById('datePicker');
+    if (currentPeriod === 'custom') {
+      picker.classList.add('visible');
+      // default to today if no date chosen yet
+      if (!picker.value) picker.value = new Date().toLocaleDateString('en-CA');
+      customDate = picker.value;
+    } else {
+      picker.classList.remove('visible');
+    }
+
     refresh();
   });
 });
 
-// Flush current session data then render
+// ── Date picker ──
+document.getElementById('datePicker').addEventListener('change', e => {
+  customDate = e.target.value;
+  refresh();
+});
+
+// Flush current session then render
 chrome.runtime.sendMessage({ type: 'flush' }, () => {
   if (chrome.runtime.lastError) console.warn('flush:', chrome.runtime.lastError.message);
   refresh();

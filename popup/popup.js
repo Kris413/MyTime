@@ -1,9 +1,9 @@
 function formatTime(seconds) {
-  if (seconds < 60) return `${seconds}秒`;
+  if (seconds < 60) return '< 1分钟';
   if (seconds < 3600) return `${Math.floor(seconds / 60)}分钟`;
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  return m > 0 ? `${h}小时${m}分` : `${h}小时`;
+  return m > 0 ? `${h}小时${m}分钟` : `${h}小时`;
 }
 
 function getToday() {

@@ -9,15 +9,28 @@
 <body>
   <header class="header">
     <div class="logo">MyTime</div>
-    <nav class="period-nav">
-      <button class="period-btn active" data-period="today">今天</button>
-      <button class="period-btn" data-period="week">本周</button>
-      <button class="period-btn" data-period="month">本月</button>
-      <button class="period-btn" data-period="year">今年</button>
-    </nav>
   </header>
 
   <main class="main">
+
+    <!-- Period selector + date picker, lives with the data -->
+    <div class="controls">
+      <div class="period-tabs" id="periodTabs">
+        <button class="period-btn active" data-period="today">今天</button>
+        <button class="period-btn" data-period="week">本周</button>
+        <button class="period-btn" data-period="month">本月</button>
+        <button class="period-btn" data-period="year">今年</button>
+        <button class="period-btn" data-period="custom" id="customBtn">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="12" height="11" rx="2"/>
+            <path d="M5 1v4M11 1v4M2 7h12"/>
+          </svg>
+          日历
+        </button>
+      </div>
+      <input type="date" id="datePicker" class="date-input">
+    </div>
+
     <section class="summary">
       <div class="stat-card">
         <div class="stat-label">总时长</div>
@@ -46,6 +59,7 @@
       <div class="card-title">网站详情</div>
       <div id="sites"><div class="empty">暂无数据</div></div>
     </section>
+
   </main>
 
   <script src="../categories.js"></script>

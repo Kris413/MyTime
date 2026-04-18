@@ -80,6 +80,10 @@ const CATEGORIES = {
       'character.ai', 'anthropic.com',
     ],
   },
+  '其他': {
+    color: '#9ca3af',
+    domains: [], // catch-all for unmatched domains
+  },
 };
 
 const OVER_LIMIT_SECONDS = 7200; // 2 hours per day
@@ -88,6 +92,7 @@ function categorize(domain) {
   if (!domain) return '其他';
   const d = domain.toLowerCase().replace(/^www\./, '');
   for (const [cat, { domains }] of Object.entries(CATEGORIES)) {
+    if (cat === '其他') continue;
     if (domains.some(rule => d === rule || d.endsWith('.' + rule))) {
       return cat;
     }
