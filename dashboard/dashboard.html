@@ -7,8 +7,16 @@
   <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
+
   <header class="header">
     <div class="logo">MyTime</div>
+    <button class="btn-settings" id="openSettings" title="设置每日上限">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="10" cy="10" r="2.5"/>
+        <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42"/>
+      </svg>
+      上限设置
+    </button>
   </header>
 
   <main class="main">
@@ -31,6 +39,16 @@
       <input type="date" id="datePicker" class="date-input">
     </div>
 
+    <!-- Auto insight -->
+    <div class="insight-card" id="insightCard" style="display:none">
+      <div class="insight-icon">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="10" cy="10" r="8"/><path d="M10 6v4l2.5 2.5"/>
+        </svg>
+      </div>
+      <div class="insight-text" id="insightText"></div>
+    </div>
+
     <!-- Hero stat -->
     <section class="hero-card">
       <div class="hero-period" id="heroPeriod">今日总计</div>
@@ -49,7 +67,7 @@
         <div class="hero-meta-sep" id="overSep" style="display:none"></div>
         <div class="hero-meta-item" id="overItem" style="display:none">
           <div class="hero-meta-value warn" id="overCount">—</div>
-          <div class="hero-meta-label">超时类别</div>
+          <div class="hero-meta-label">超出上限</div>
         </div>
       </div>
     </section>
@@ -67,6 +85,27 @@
     </section>
 
   </main>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">每日时长上限</div>
+          <div class="modal-hint">可选配置，超出时高亮提醒</div>
+        </div>
+        <button class="modal-close" id="closeSettings">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M1 1l12 12M13 1L1 13"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" id="limitsList"></div>
+      <div class="modal-footer">
+        <button class="btn-save" id="saveLimits">保存</button>
+      </div>
+    </div>
+  </div>
 
   <script src="../categories.js"></script>
   <script src="dashboard.js"></script>
