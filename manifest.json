@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "MyTime",
+  "version": "0.1.0",
+  "description": "记录和分析你的浏览器使用时间",
+  "permissions": ["tabs", "storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "MyTime"
+  }
+}

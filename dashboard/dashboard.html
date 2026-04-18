@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyTime</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <header class="header">
+    <div class="logo">MyTime</div>
+    <nav class="period-nav">
+      <button class="period-btn active" data-period="today">今天</button>
+      <button class="period-btn" data-period="week">本周</button>
+      <button class="period-btn" data-period="month">本月</button>
+      <button class="period-btn" data-period="year">今年</button>
+    </nav>
+  </header>
+
+  <main class="main">
+    <section class="summary">
+      <div class="stat-card">
+        <div class="stat-label">总时长</div>
+        <div class="stat-value" id="totalTime">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">活跃类别</div>
+        <div class="stat-value" id="totalCats">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">访问网站</div>
+        <div class="stat-value" id="totalSites">—</div>
+      </div>
+      <div class="stat-card alert" id="overCard" style="display:none">
+        <div class="stat-label">超时类别</div>
+        <div class="stat-value" id="overCount">—</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">类别分布</div>
+      <div id="chart"><div class="empty">暂无数据</div></div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">网站详情</div>
+      <div id="sites"><div class="empty">暂无数据</div></div>
+    </section>
+  </main>
+
+  <script src="../categories.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

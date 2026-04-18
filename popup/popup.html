@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>MyTime</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <div class="title">MyTime</div>
+    <div class="date" id="date"></div>
+  </div>
+
+  <div class="total">
+    <span class="total-label">今日总计</span>
+    <span class="total-time" id="totalTime">—</span>
+  </div>
+
+  <div class="categories" id="categories">
+    <div class="placeholder">加载中…</div>
+  </div>
+
+  <div class="footer">
+    <button class="btn-dashboard" id="openDashboard">查看完整数据 →</button>
+  </div>
+
+  <script src="../categories.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
