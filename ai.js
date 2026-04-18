@@ -1,7 +1,7 @@
 // MyTime — AI module
 // Supports direct Qwen API (local key) or BrainBoom proxy (no key needed)
 
-const AI_PROXY_URL   = 'https://brainboom.top/api/analyze';
+const AI_PROXY_URL   = 'https://www.brainboom.top/api/analyze';
 const AI_PROXY_TOKEN = 'mytime-proxy-k1';
 const AI_QWEN_URL    = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
 const AI_MODEL       = 'qwen-plus';
