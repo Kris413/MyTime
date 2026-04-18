@@ -13,15 +13,15 @@
 
   <main class="main">
 
-    <!-- Period selector + date picker, lives with the data -->
+    <!-- Period selector -->
     <div class="controls">
-      <div class="period-tabs" id="periodTabs">
+      <div class="period-tabs">
         <button class="period-btn active" data-period="today">今天</button>
         <button class="period-btn" data-period="week">本周</button>
         <button class="period-btn" data-period="month">本月</button>
         <button class="period-btn" data-period="year">今年</button>
-        <button class="period-btn" data-period="custom" id="customBtn">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <button class="period-btn" data-period="custom">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="3" width="12" height="11" rx="2"/>
             <path d="M5 1v4M11 1v4M2 7h12"/>
           </svg>
@@ -31,30 +31,36 @@
       <input type="date" id="datePicker" class="date-input">
     </div>
 
-    <section class="summary">
-      <div class="stat-card">
-        <div class="stat-label">总时长</div>
-        <div class="stat-value" id="totalTime">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">活跃类别</div>
-        <div class="stat-value" id="totalCats">—</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">访问网站</div>
-        <div class="stat-value" id="totalSites">—</div>
-      </div>
-      <div class="stat-card alert" id="overCard" style="display:none">
-        <div class="stat-label">超时类别</div>
-        <div class="stat-value" id="overCount">—</div>
+    <!-- Hero stat -->
+    <section class="hero-card">
+      <div class="hero-period" id="heroPeriod">今日总计</div>
+      <div class="hero-time" id="totalTime">—</div>
+      <div class="hero-divider"></div>
+      <div class="hero-meta">
+        <div class="hero-meta-item">
+          <div class="hero-meta-value" id="totalCats">—</div>
+          <div class="hero-meta-label">活跃类别</div>
+        </div>
+        <div class="hero-meta-sep"></div>
+        <div class="hero-meta-item">
+          <div class="hero-meta-value" id="totalSites">—</div>
+          <div class="hero-meta-label">访问网站</div>
+        </div>
+        <div class="hero-meta-sep" id="overSep" style="display:none"></div>
+        <div class="hero-meta-item" id="overItem" style="display:none">
+          <div class="hero-meta-value warn" id="overCount">—</div>
+          <div class="hero-meta-label">超时类别</div>
+        </div>
       </div>
     </section>
 
+    <!-- Category chart -->
     <section class="card">
       <div class="card-title">类别分布</div>
       <div id="chart"><div class="empty">暂无数据</div></div>
     </section>
 
+    <!-- Sites table -->
     <section class="card">
       <div class="card-title">网站详情</div>
       <div id="sites"><div class="empty">暂无数据</div></div>
