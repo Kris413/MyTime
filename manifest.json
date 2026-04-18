@@ -4,6 +4,10 @@
   "version": "0.3.0",
   "description": "记录和分析你的浏览器使用时间",
   "permissions": ["tabs", "storage", "alarms", "notifications"],
+  "host_permissions": [
+    "https://brainboom.top/*",
+    "https://dashscope.aliyuncs.com/*"
+  ],
   "icons": {
     "16":  "icons/icon16.png",
     "48":  "icons/icon48.png",
