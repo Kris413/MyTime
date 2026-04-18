@@ -552,3 +552,113 @@ body {
 }
 
 .btn-save:hover { opacity: 0.85; }
+
+/* ── API Key section (inside modal) ── */
+.api-section {
+  padding: 18px 28px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.api-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+.api-opt { font-weight: 400; color: var(--text-3); }
+.api-hint { font-size: 11.5px; color: var(--text-3); margin-bottom: 10px; }
+.api-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-1);
+  background: var(--bg);
+  outline: none;
+}
+.api-input:focus { border-color: var(--border-2); }
+.limits-title {
+  padding: 14px 28px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── AI Analysis section ── */
+.ai-section { display: flex; flex-direction: column; gap: 16px; }
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ai-btns { display: flex; gap: 8px; }
+
+.ai-btn {
+  padding: 6px 16px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.ai-btn:hover { border-color: var(--border-2); color: var(--text-1); }
+.ai-btn:disabled { opacity: 0.5; cursor: wait; }
+
+.ai-empty { text-align: center; color: var(--text-3); padding: 24px 0 8px; font-size: 13px; }
+
+.ai-result {
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: var(--text-1);
+  white-space: pre-wrap;
+}
+
+.ai-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ai-type-badge {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.ai-date { font-size: 11.5px; color: var(--text-3); }
+
+/* ── Bar animation (JS-driven, CSS handles easing) ── */
+.chart-fill, .site-bar-fill {
+  transition: width 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Hero fade on period switch */
+.hero-time {
+  transition: opacity 0.12s ease;
+}
+.hero-time.fading { opacity: 0; }
+
+/* Insight card flex */
+.insight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--warn-bg);
+  border: 1.5px solid var(--warn-border);
+  border-radius: 14px;
+  padding: 14px 18px;
+}
+.insight-text { font-size: 13.5px; color: var(--text-1); line-height: 1.6; }

@@ -7,11 +7,10 @@
   <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
-
   <header class="header">
     <div class="logo">MyTime</div>
-    <button class="btn-settings" id="openSettings" title="设置每日上限">
-      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <button class="btn-settings" id="openSettings">
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="10" cy="10" r="2.5"/>
         <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42"/>
       </svg>
@@ -21,7 +20,6 @@
 
   <main class="main">
 
-    <!-- Period selector -->
     <div class="controls">
       <div class="period-tabs">
         <button class="period-btn active" data-period="today">今天</button>
@@ -30,8 +28,7 @@
         <button class="period-btn" data-period="year">今年</button>
         <button class="period-btn" data-period="custom">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="3" width="12" height="11" rx="2"/>
-            <path d="M5 1v4M11 1v4M2 7h12"/>
+            <rect x="2" y="3" width="12" height="11" rx="2"/><path d="M5 1v4M11 1v4M2 7h12"/>
           </svg>
           日历
         </button>
@@ -39,17 +36,13 @@
       <input type="date" id="datePicker" class="date-input">
     </div>
 
-    <!-- Auto insight -->
     <div class="insight-card" id="insightCard" style="display:none">
-      <div class="insight-icon">
-        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="10" cy="10" r="8"/><path d="M10 6v4l2.5 2.5"/>
-        </svg>
-      </div>
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:#f59e0b">
+        <circle cx="10" cy="10" r="8"/><path d="M10 6v4l2.5 2.5"/>
+      </svg>
       <div class="insight-text" id="insightText"></div>
     </div>
 
-    <!-- Hero stat -->
     <section class="hero-card">
       <div class="hero-period" id="heroPeriod">今日总计</div>
       <div class="hero-time" id="totalTime">—</div>
@@ -72,16 +65,28 @@
       </div>
     </section>
 
-    <!-- Category chart -->
     <section class="card">
       <div class="card-title">类别分布</div>
       <div id="chart"><div class="empty">暂无数据</div></div>
     </section>
 
-    <!-- Sites table -->
     <section class="card">
       <div class="card-title">网站详情</div>
       <div id="sites"><div class="empty">暂无数据</div></div>
+    </section>
+
+    <!-- AI Analysis -->
+    <section class="card ai-section">
+      <div class="ai-header">
+        <div class="card-title" style="margin:0">AI 分析</div>
+        <div class="ai-btns">
+          <button class="ai-btn" data-type="week">生成周报</button>
+          <button class="ai-btn" data-type="month">生成月报</button>
+        </div>
+      </div>
+      <div class="ai-result" id="aiResult">
+        <div class="ai-empty">选择周报或月报生成 AI 分析</div>
+      </div>
     </section>
 
   </main>
@@ -91,16 +96,26 @@
     <div class="modal">
       <div class="modal-header">
         <div>
-          <div class="modal-title">每日时长上限</div>
-          <div class="modal-hint">可选配置，超出时高亮提醒</div>
+          <div class="modal-title">设置</div>
+          <div class="modal-hint">类别上限与 AI 配置</div>
         </div>
         <button class="modal-close" id="closeSettings">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M1 1l12 12M13 1L1 13"/>
           </svg>
         </button>
       </div>
-      <div class="modal-body" id="limitsList"></div>
+      <div class="modal-body">
+        <!-- API Key -->
+        <div class="api-section">
+          <div class="api-label">Qwen API Key <span class="api-opt">（可选）</span></div>
+          <div class="api-hint">填写后直连 API；留空则使用共享代理</div>
+          <input type="password" class="api-input" id="apiKeyInput" placeholder="sk-...">
+        </div>
+        <!-- Limits -->
+        <div class="limits-title">每日时长上限</div>
+        <div id="limitsList"></div>
+      </div>
       <div class="modal-footer">
         <button class="btn-save" id="saveLimits">保存</button>
       </div>
@@ -108,6 +123,7 @@
   </div>
 
   <script src="../categories.js"></script>
+  <script src="../ai.js"></script>
   <script src="dashboard.js"></script>
 </body>
 </html>

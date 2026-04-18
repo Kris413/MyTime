@@ -11,13 +11,34 @@
     <div class="date" id="date"></div>
   </div>
 
-  <div class="total">
-    <span class="total-label">今日总计</span>
-    <span class="total-time" id="totalTime">—</span>
+  <div class="tab-bar">
+    <button class="tab active" data-tab="data">今日数据</button>
+    <button class="tab" data-tab="report">
+      日报
+      <span class="tab-dot" id="tabDot" style="display:none"></span>
+    </button>
   </div>
 
-  <div class="categories" id="categories">
-    <div class="placeholder">加载中…</div>
+  <!-- View: today data -->
+  <div class="view" id="view-data">
+    <div class="total">
+      <span class="total-label">今日总计</span>
+      <span class="total-time" id="totalTime">—</span>
+    </div>
+    <div class="categories" id="categories">
+      <div class="placeholder">加载中…</div>
+    </div>
+  </div>
+
+  <!-- View: daily report -->
+  <div class="view hidden" id="view-report">
+    <div class="report-header" id="reportDateLabel"></div>
+    <div class="report-body" id="reportBody">
+      <div class="placeholder">今日日报尚未生成，将于 23:00 自动生成</div>
+    </div>
+    <div class="report-nav">
+      <button class="btn-prev" id="btnPrevReport">← 查看昨日日报</button>
+    </div>
   </div>
 
   <div class="footer">
