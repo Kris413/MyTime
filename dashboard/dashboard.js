@@ -78,7 +78,9 @@ async function loadDomains(period, offset = 0) {
   const stored = await chrome.storage.local.get(keys);
   const domains = {};
   for (const dayData of Object.values(stored)) {
-    for (const [domain, { category, seconds }] of Object.entries(dayData)) {
+    for (const [domain, data] of Object.entries(dayData)) {
+      if (domain === '_hourly') continue;
+      const { category, seconds } = data;
       if (!domains[domain]) domains[domain] = { category, seconds: 0 };
       domains[domain].seconds += seconds;
     }
@@ -199,6 +201,51 @@ function renderInsight(catData, prevMap) {
   else card.style.display = 'none';
 }
 
+// ── Hourly data ───────────────────────────────────────────────────────────────
+
+async function loadHourlyData(period) {
+  const keys = getDateKeys(period, 0);
+  if (!keys.length) return {};
+  const stored = await chrome.storage.local.get(keys);
+  const hourly = {};
+  for (const dayData of Object.values(stored)) {
+    for (const [h, sec] of Object.entries(dayData._hourly || {})) {
+      hourly[h] = (hourly[h] || 0) + sec;
+    }
+  }
+  return hourly;
+}
+
+function renderHeatmap(hourlyData) {
+  const el = document.getElementById('heatmap');
+  const values = Array.from({length: 24}, (_, i) => hourlyData[String(i).padStart(2, '0')] || 0);
+  const hasData = values.some(v => v > 0);
+
+  if (!hasData) { el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
+
+  const maxVal = Math.max(...values, 1);
+  const peakIdx = values.indexOf(Math.max(...values));
+
+  const cells = values.map((val, i) => {
+    const opacity = val > 0 ? (0.1 + (val / maxVal) * 0.9).toFixed(2) : '0.05';
+    const hStr  = String(i).padStart(2, '0');
+    const hNext = String(i + 1).padStart(2, '0');
+    const tip   = val > 0 ? `${hStr}:00–${hNext}:00  ${formatTime(val)}` : `${hStr}:00–${hNext}:00  无记录`;
+    return `<div class="heatmap-cell" style="opacity:${opacity}" title="${tip}"></div>`;
+  }).join('');
+
+  const peakH    = String(peakIdx).padStart(2, '0');
+  const peakInt  = peakIdx;
+  const peakPd   = peakInt < 6 ? '深夜' : peakInt < 12 ? '上午' : peakInt < 18 ? '下午' : '晚上';
+
+  el.innerHTML = `
+    <div class="heatmap-grid">${cells}</div>
+    <div class="heatmap-sections">
+      <span>深夜 0–6</span><span>上午 6–12</span><span>下午 12–18</span><span>晚上 18–24</span>
+    </div>
+    <div class="heatmap-peak">峰值 ${peakPd} ${peakH}:00 · ${formatTime(values[peakIdx])}</div>`;
+}
+
 // Animate chart bars (only visible rows get staggered; extra rows get width set instantly)
 function animateChartFills() {
   requestAnimationFrame(() => {
@@ -293,7 +340,10 @@ function renderSites(domains) {
       <div class="site-row${extraClass}">
         <div class="site-rank">${padRank(i+1)}</div>
         <div class="site-info">
-          <div class="site-domain">${domain}</div>
+          <div class="site-domain-row">
+            <img class="site-favicon" src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" loading="lazy" onerror="this.style.display='none'">
+            <span class="site-domain">${domain}</span>
+          </div>
           <div class="site-cat">${category}</div>
         </div>
         <div class="site-bar-track">
@@ -414,9 +464,10 @@ async function refresh() {
   const heroEl = document.getElementById('totalTime');
   heroEl.classList.add('fading');
 
-  const [domains, prevDomains] = await Promise.all([
+  const [domains, prevDomains, hourlyData] = await Promise.all([
     loadDomains(currentPeriod, 0),
     ['today','week','month'].includes(currentPeriod) ? loadDomains(currentPeriod, 1) : Promise.resolve({}),
+    loadHourlyData(currentPeriod),
   ]);
   const catData = aggregateByCategory(domains);
   const prevMap = aggregateByCategoryMap(prevDomains);
@@ -424,6 +475,7 @@ async function refresh() {
   heroEl.classList.remove('fading');
   renderHero(domains, catData);
   renderInsight(catData, prevMap);
+  renderHeatmap(hourlyData);
   renderChart(catData, prevMap);
   renderSites(domains);
 }

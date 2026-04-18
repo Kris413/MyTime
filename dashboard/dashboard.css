@@ -590,6 +590,64 @@ body {
 
 .ai-point:hover { border-left-color: var(--text-3); }
 
+/* ── Heatmap ── */
+.heatmap-card { }
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 3px;
+  height: 30px;
+}
+
+.heatmap-cell {
+  background: var(--text-1);
+  border-radius: 4px;
+  cursor: default;
+  transition: outline 0.1s;
+}
+
+.heatmap-cell:hover {
+  outline: 2px solid var(--text-1);
+  outline-offset: 1px;
+}
+
+.heatmap-sections {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 7px;
+  text-align: center;
+}
+
+.heatmap-sections span {
+  font-size: 10.5px;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.heatmap-peak {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+/* ── Site favicon ── */
+.site-domain-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.site-favicon {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
 /* ── Settings Modal ── */
 .modal-overlay {
   display: none;

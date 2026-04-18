@@ -26,6 +26,10 @@ async function saveElapsed(domain, startTime) {
   const dayData = stored[dateKey] || {};
   if (!dayData[domain]) dayData[domain] = { category, seconds: 0 };
   dayData[domain].seconds += seconds;
+  // Hourly tracking — attribute time to the hour the session started
+  const hour = String(new Date(startTime).getHours()).padStart(2, '0');
+  if (!dayData._hourly) dayData._hourly = {};
+  dayData._hourly[hour] = (dayData._hourly[hour] || 0) + seconds;
   await chrome.storage.local.set({ [dateKey]: dayData });
 }
 
@@ -101,7 +105,9 @@ async function getSettings() {
 
 function aggregateDomains(dayData) {
   const cats = {}, sites = {};
-  for (const [domain, { category, seconds }] of Object.entries(dayData)) {
+  for (const [domain, data] of Object.entries(dayData)) {
+    if (domain === '_hourly') continue;
+    const { category, seconds } = data;
     cats[category] = (cats[category] || 0) + seconds;
     sites[domain] = { category, seconds };
   }
@@ -118,8 +124,9 @@ async function getPrevWeekCatMap() {
   const map = {};
   const dayCount = Math.max(Object.keys(stored).length, 1);
   for (const dayData of Object.values(stored)) {
-    for (const { category, seconds } of Object.values(dayData)) {
-      map[category] = (map[category] || 0) + seconds;
+    for (const [domain, data] of Object.entries(dayData)) {
+      if (domain === '_hourly') continue;
+      map[data.category] = (map[data.category] || 0) + data.seconds;
     }
   }
   for (const cat of Object.keys(map)) map[cat] = Math.round(map[cat] / dayCount);
@@ -143,8 +150,9 @@ async function generateDailyReport() {
   const topSites = Object.entries(sites).sort((a, b) => b[1].seconds - a[1].seconds);
   const prevMap = await getPrevWeekCatMap();
   const settings = await getSettings();
+  const hourlyData = dayData._hourly || {};
 
-  const messages = buildDailyMessages(catData, topSites, prevMap, settings.limits, today);
+  const messages = buildDailyMessages(catData, topSites, prevMap, settings.limits, today, hourlyData);
 
   let content;
   try {

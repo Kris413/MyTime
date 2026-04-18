@@ -43,7 +43,7 @@ async function aiCall(messages, localKey) {
 
 // ── Prompt builders ───────────────────────────────────────────────────────────
 
-function buildDailyMessages(catData, topSites, prevMap, limits, date) {
+function buildDailyMessages(catData, topSites, prevMap, limits, date, hourlyData = {}) {
   const dow = ['周日','周一','周二','周三','周四','周五','周六'][new Date(date + 'T12:00:00').getDay()];
   const total = catData.reduce((s, [, sec]) => s + sec, 0);
 
@@ -61,16 +61,26 @@ function buildDailyMessages(catData, topSites, prevMap, limits, date) {
     .map(([d, { category, seconds }]) => `  ${d}（${category}）：${aiFormatTime(seconds)}`)
     .join('\n');
 
-  const user = `今天（${dow} ${date}）浏览数据：
-总时长 ${aiFormatTime(total)}
+  // Peak hours info
+  let peakLine = '';
+  const hourEntries = Object.entries(hourlyData).sort((a, b) => b[1] - a[1]);
+  if (hourEntries.length) {
+    const [peakH, peakSec] = hourEntries[0];
+    const peakInt = parseInt(peakH);
+    const period = peakInt < 6 ? '深夜' : peakInt < 12 ? '上午' : peakInt < 18 ? '下午' : '晚上';
+    peakLine = `\n活跃峰值：${period} ${peakH}:00（${aiFormatTime(peakSec)}）`;
+  }
 
-类别明细：
+  const user = `今天（${dow} ${date}）浏览数据：
+总时长 ${aiFormatTime(total)}${peakLine}
+
+类别明细（括号为与上期对比）：
 ${catLines}
 
 最常访问网站：
 ${siteLines}
 
-请给出：①今日概览 ②最值得关注的发现（附数据）③明日具体建议`;
+请给出：①今日整体情况 ②最值得关注的一个发现（要有数据支撑）③时间分配有没有可优化的地方 ④明天一条具体可操作建议`;
 
   return [{ role: 'system', content: AI_SYSTEM_PROMPT }, { role: 'user', content: user }];
 }
