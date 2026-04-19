@@ -19,12 +19,13 @@ function aiFormatTime(s) {
 }
 
 // Core call — local key → direct Qwen, no key → proxy
-async function aiCall(messages, localKey) {
+// model defaults to AI_MODEL (qwen-plus); pass 'qwen-turbo' for cheap classification tasks
+async function aiCall(messages, localKey, model = AI_MODEL) {
   if (localKey) {
     const res = await fetch(AI_QWEN_URL, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${localKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: AI_MODEL, messages }),
+      body: JSON.stringify({ model, messages }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error?.message ?? `Qwen ${res.status}`);
@@ -33,12 +34,37 @@ async function aiCall(messages, localKey) {
     const res = await fetch(AI_PROXY_URL, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${AI_PROXY_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify({ messages, model }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error ?? `Proxy ${res.status}`);
     return data.content;
   }
+}
+
+// Batch-classify unknown domains using qwen-turbo (cheap)
+// Returns { 'taobao.com': '购物', 'bilibili.com': '娱乐', ... }
+async function batchCategorize(domains, localKey) {
+  if (!domains.length) return {};
+  const catList = Object.keys(CATEGORIES).filter(c => c !== '其他').join('、');
+  const messages = [
+    {
+      role: 'system',
+      content: `你是网站分类助手。根据域名判断其所属类别，从以下选项中选一个最合适的：${catList}、其他。
+输出格式：每行一条，"域名:类别"，不要解释，不要多余文字。`,
+    },
+    { role: 'user', content: domains.join('\n') },
+  ];
+  const text = await aiCall(messages, localKey, 'qwen-turbo');
+  const map = {};
+  for (const line of text.trim().split('\n')) {
+    const idx = line.indexOf(':');
+    if (idx === -1) continue;
+    const domain = line.slice(0, idx).trim();
+    const cat    = line.slice(idx + 1).trim();
+    if (domain && cat) map[domain] = cat;
+  }
+  return map;
 }
 
 // ── Prompt builders ───────────────────────────────────────────────────────────

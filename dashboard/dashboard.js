@@ -1,6 +1,8 @@
-let currentPeriod = 'today';
-let customDate    = null;
-let settings      = { limits: {}, apiKey: '' };
+let currentPeriod    = 'today';
+let customDate       = null;
+let settings         = { limits: {}, apiKey: '' };
+let aiCategoryCache  = {};   // { domain: category } persisted in storage
+let aiCatPending     = false; // guard: no concurrent batch calls
 
 const SHOW_LIMIT = 5;
 
@@ -80,7 +82,11 @@ async function loadDomains(period, offset = 0) {
   for (const dayData of Object.values(stored)) {
     for (const [domain, data] of Object.entries(dayData)) {
       if (domain === '_hourly') continue;
-      const { category, seconds } = data;
+      const { seconds } = data;
+      // Apply AI cache: replace '其他' with AI-determined category if available
+      const rawCat  = data.category;
+      const category = (rawCat === '其他' && aiCategoryCache[domain] && aiCategoryCache[domain] !== '其他')
+        ? aiCategoryCache[domain] : rawCat;
       if (!domains[domain]) domains[domain] = { category, seconds: 0 };
       domains[domain].seconds += seconds;
       if (data.title) domains[domain].title = data.title;
@@ -109,6 +115,40 @@ function aggregateByCategory(domains) {
 async function loadSettings() {
   const r = await chrome.storage.local.get('settings');
   settings = r.settings || { limits: {}, apiKey: '' };
+}
+
+async function loadAICategories() {
+  const r = await chrome.storage.local.get('ai-categories');
+  aiCategoryCache = r['ai-categories'] || {};
+}
+
+// Find domains still "其他" and not yet cached, batch-classify them, then re-render
+async function runAICategorization(uncategorized) {
+  if (!uncategorized.length || aiCatPending) return;
+  aiCatPending = true;
+
+  // Show subtle hint in chart card title
+  const chartLabel = document.querySelector('#chart')?.closest('.card')?.querySelector('.card-label');
+  if (chartLabel) chartLabel.dataset.hint = `AI 识别 ${uncategorized.length} 个网站…`;
+
+  try {
+    const BATCH = 20;
+    for (let i = 0; i < uncategorized.length; i += BATCH) {
+      const batch = uncategorized.slice(i, i + BATCH);
+      const result = await batchCategorize(batch, settings.apiKey || null);
+      // Cache all results (including '其他') to avoid re-querying the same domain
+      Object.assign(aiCategoryCache, result);
+    }
+    await chrome.storage.local.set({ 'ai-categories': aiCategoryCache });
+    // Re-render with updated categories
+    if (chartLabel) delete chartLabel.dataset.hint;
+    await refresh();
+  } catch (e) {
+    console.warn('[MyTime] AI categorize failed:', e);
+    if (chartLabel) delete chartLabel.dataset.hint;
+  } finally {
+    aiCatPending = false;
+  }
 }
 
 async function saveSettings() {
@@ -481,6 +521,12 @@ async function refresh() {
   renderHeatmap(hourlyData);
   renderChart(catData, prevMap);
   renderSites(domains);
+
+  // Trigger AI categorization for domains still in '其他' and not yet cached
+  const uncategorized = Object.entries(domains)
+    .filter(([d, { category }]) => category === '其他' && !(d in aiCategoryCache))
+    .map(([d]) => d);
+  if (uncategorized.length) runAICategorization(uncategorized);
 }
 
 // ── Period tabs ───────────────────────────────────────────────────────────────
@@ -507,7 +553,7 @@ document.getElementById('datePicker').addEventListener('change', e => {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 async function init() {
-  await loadSettings();
+  await Promise.all([loadSettings(), loadAICategories()]);
   chrome.runtime.sendMessage({ type: 'flush' }, () => {
     if (chrome.runtime.lastError) console.warn('flush:', chrome.runtime.lastError.message);
     refresh();

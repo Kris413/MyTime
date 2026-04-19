@@ -281,6 +281,16 @@ body {
   letter-spacing: -0.02em;
 }
 
+/* AI categorization in-progress hint */
+.card-label[data-hint]::after {
+  content: attr(data-hint);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-3);
+  margin-left: 10px;
+  letter-spacing: 0;
+}
+
 .empty {
   text-align: center;
   color: var(--text-3);
