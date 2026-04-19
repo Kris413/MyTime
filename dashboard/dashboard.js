@@ -83,6 +83,7 @@ async function loadDomains(period, offset = 0) {
       const { category, seconds } = data;
       if (!domains[domain]) domains[domain] = { category, seconds: 0 };
       domains[domain].seconds += seconds;
+      if (data.title) domains[domain].title = data.title;
     }
   }
   if (period === 'today' && offset > 0) {
@@ -332,19 +333,21 @@ function renderSites(domains) {
   const maxSec  = sorted[0][1].seconds;
   const hasMore = sorted.length > SHOW_LIMIT;
 
-  const rows = sorted.map(([domain, { category, seconds }], i) => {
-    const color      = getCategoryColor(category);
-    const pct        = Math.round((seconds / maxSec) * 100);
-    const extraClass = i >= SHOW_LIMIT ? ' extra' : '';
+  const rows = sorted.map(([domain, { category, seconds, title }], i) => {
+    const color       = getCategoryColor(category);
+    const pct         = Math.round((seconds / maxSec) * 100);
+    const extraClass  = i >= SHOW_LIMIT ? ' extra' : '';
+    const displayName = title || domain;
+    const subText     = title ? `${domain} · ${category}` : category;
     return `
       <div class="site-row${extraClass}">
         <div class="site-rank">${padRank(i+1)}</div>
         <div class="site-info">
           <div class="site-domain-row">
             <img class="site-favicon" src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" loading="lazy" onerror="this.style.display='none'">
-            <span class="site-domain">${domain}</span>
+            <span class="site-name">${displayName}</span>
           </div>
-          <div class="site-cat">${category}</div>
+          <div class="site-sub">${subText}</div>
         </div>
         <div class="site-bar-track">
           <div class="site-bar-fill" style="width:0;background:${color}" data-w="${pct}%"></div>

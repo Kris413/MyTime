@@ -16,7 +16,7 @@ function getDateKey(ts = Date.now()) {
   return new Date(ts).toLocaleDateString('en-CA');
 }
 
-async function saveElapsed(domain, startTime) {
+async function saveElapsed(domain, startTime, title = '') {
   if (!domain || !startTime) return;
   const seconds = Math.round((Date.now() - startTime) / 1000);
   if (seconds < 2) return;
@@ -26,6 +26,10 @@ async function saveElapsed(domain, startTime) {
   const dayData = stored[dateKey] || {};
   if (!dayData[domain]) dayData[domain] = { category, seconds: 0 };
   dayData[domain].seconds += seconds;
+  // Save most recent meaningful page title (skip if same as domain or empty)
+  if (title && title !== domain && title.trim()) {
+    dayData[domain].title = title.trim();
+  }
   // Hourly tracking — attribute time to the hour the session started
   const hour = String(new Date(startTime).getHours()).padStart(2, '0');
   if (!dayData._hourly) dayData._hourly = {};
@@ -41,20 +45,20 @@ async function persistState() {
 
 async function stopTracking() {
   if (!activeTab) return;
-  await saveElapsed(activeTab.domain, activeTab.startTime);
+  await saveElapsed(activeTab.domain, activeTab.startTime, activeTab.title || '');
   activeTab = null;
   await persistState();
 }
 
 async function startTracking(tab) {
   if (!tab?.url) return;
-  activeTab = { tabId: tab.id, url: tab.url, domain: getDomain(tab.url), startTime: Date.now() };
+  activeTab = { tabId: tab.id, url: tab.url, domain: getDomain(tab.url), title: tab.title || '', startTime: Date.now() };
   await persistState();
 }
 
 async function flushCurrentSession() {
   if (!activeTab) return;
-  await saveElapsed(activeTab.domain, activeTab.startTime);
+  await saveElapsed(activeTab.domain, activeTab.startTime, activeTab.title || '');
   activeTab.startTime = Date.now();
   await persistState();
 }
@@ -201,7 +205,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 (async () => {
   try {
     const { activeTab: saved } = await chrome.storage.session.get('activeTab');
-    if (saved) await saveElapsed(saved.domain, saved.startTime);
+    if (saved) await saveElapsed(saved.domain, saved.startTime, saved.title || '');
     const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
     if (tab) await startTracking(tab);
   } catch {}

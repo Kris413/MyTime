@@ -157,12 +157,12 @@ body {
 /* ── Insight card ── */
 .insight-card {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   background: var(--warn-bg);
   border: 1.5px solid var(--warn-border);
   border-radius: 14px;
-  padding: 14px 18px;
+  padding: 12px 18px;
 }
 
 .insight-text {
@@ -463,18 +463,22 @@ body {
 
 .site-info { min-width: 0; }
 
-.site-domain {
+.site-name {
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
-.site-cat {
+.site-sub {
   font-size: 11px;
   color: var(--text-3);
   margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .site-bar-track {
