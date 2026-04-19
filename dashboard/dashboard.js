@@ -305,7 +305,7 @@ function renderHeatmap(hourlyData) {
     const hStr  = String(i).padStart(2, '0');
     const hNext = String(i + 1).padStart(2, '0');
     const tip   = val > 0 ? `${hStr}:00–${hNext}:00  ${formatTime(val)}` : `${hStr}:00–${hNext}:00  无记录`;
-    return `<div class="heatmap-cell" style="opacity:${opacity}" title="${tip}"></div>`;
+    return `<div class="heatmap-cell" style="opacity:${opacity};--cell-delay:${i * 18}ms" title="${tip}"></div>`;
   }).join('');
 
   const peakH    = String(peakIdx).padStart(2, '0');
@@ -364,9 +364,10 @@ function renderChart(catData, prevMap) {
       : status==='near' ? '<span class="near-badge">接近</span>' : '';
     const limitLabel = limit ? `<span class="limit-text"> / ${formatTime(limit)}</span>` : '';
     const extraClass = i >= SHOW_LIMIT ? ' extra' : '';
+    const rowDelay   = i < SHOW_LIMIT ? `${i * 55}ms` : '0ms';
 
     return `
-      <div class="chart-row ${status !== 'ok' ? status : ''}${extraClass}">
+      <div class="chart-row ${status !== 'ok' ? status : ''}${extraClass}" style="--row-delay:${rowDelay}">
         <div class="chart-rank">${padRank(i+1)}</div>
         <div class="chart-label">${cat}</div>
         <div class="chart-track">
@@ -410,12 +411,13 @@ function renderSites(domains) {
     const color       = getCategoryColor(category);
     const pct         = Math.round((seconds / maxSec) * 100);
     const extraClass  = i >= SHOW_LIMIT ? ' extra' : '';
+    const rowDelay    = i < SHOW_LIMIT ? `${i * 55}ms` : '0ms';
     // Use AI-identified name; fall back to root domain
     const siteAI      = aiSiteInfo[rootDomain];
     const displayName = (siteAI?.name && siteAI.name !== rootDomain) ? siteAI.name : rootDomain;
     const showRoot    = displayName !== rootDomain; // show domain on 2nd line only when name differs
     return `
-      <div class="site-row${extraClass}">
+      <div class="site-row${extraClass}" style="--row-delay:${rowDelay}">
         <div class="site-rank">${padRank(i+1)}</div>
         <div class="site-info">
           <div class="site-domain-row">
@@ -542,19 +544,37 @@ document.querySelectorAll('.ai-btn').forEach(btn => {
 // ── Main refresh ──────────────────────────────────────────────────────────────
 
 async function refresh() {
-  const heroEl = document.getElementById('totalTime');
-  heroEl.classList.add('fading');
+  const heroTimeEl = document.getElementById('totalTime');
+  const metaEls    = document.querySelectorAll('.hero-meta-value');
 
-  const [domains, prevDomains, hourlyData] = await Promise.all([
-    loadDomains(currentPeriod, 0),
-    ['today','week','month'].includes(currentPeriod) ? loadDomains(currentPeriod, 1) : Promise.resolve({}),
-    loadHourlyData(currentPeriod),
+  // ── Flip hero time out ────────────────────────────────────────────────────
+  heroTimeEl.classList.remove('flip-in');
+  void heroTimeEl.offsetWidth;               // force reflow to restart animation
+  heroTimeEl.classList.add('flip-out');
+  metaEls.forEach(el => el.classList.add('fading'));
+
+  // Load data in parallel; also wait ≥190ms so flip-out animation finishes
+  const [dataResults] = await Promise.all([
+    Promise.all([
+      loadDomains(currentPeriod, 0),
+      ['today','week','month'].includes(currentPeriod) ? loadDomains(currentPeriod, 1) : Promise.resolve({}),
+      loadHourlyData(currentPeriod),
+    ]),
+    new Promise(r => setTimeout(r, 190)),
   ]);
+  const [domains, prevDomains, hourlyData] = dataResults;
+
   const catData = aggregateByCategory(domains);
   const prevMap = aggregateByCategoryMap(prevDomains);
 
-  heroEl.classList.remove('fading');
-  renderHero(domains, catData);
+  // ── Update content, then flip hero time in ────────────────────────────────
+  renderHero(domains, catData);              // updates textContent first
+  heroTimeEl.classList.remove('flip-out');
+  void heroTimeEl.offsetWidth;
+  heroTimeEl.classList.add('flip-in');
+  setTimeout(() => heroTimeEl.classList.remove('flip-in'), 350);
+  metaEls.forEach(el => el.classList.remove('fading'));
+
   renderInsight(catData, prevMap);
   renderHeatmap(hourlyData);
   renderChart(catData, prevMap);
