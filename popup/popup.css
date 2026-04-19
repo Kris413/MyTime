@@ -1,5 +1,10 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+:root {
+  --accent:     #6366F1;
+  --accent-bg:  #EEF2FF;
+}
+
 body {
   width: 320px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -14,6 +19,24 @@ body {
   justify-content: space-between;
   padding: 13px 16px 9px;
   border-bottom: 1px solid #e8e6e1;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.popup-logo {
+  width: 26px;
+  height: 26px;
+  background: var(--accent);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  flex-shrink: 0;
 }
 
 .title { font-weight: 700; font-size: 15px; letter-spacing: -0.02em; }
@@ -43,7 +66,7 @@ body {
   font-family: inherit;
 }
 
-.tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
 .tab-dot {
   width: 6px; height: 6px;
@@ -145,7 +168,7 @@ body {
 .btn-dashboard {
   width: 100%;
   padding: 8px;
-  background: #1a1a1a;
+  background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -153,5 +176,6 @@ body {
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
+  transition: opacity 0.15s;
 }
-.btn-dashboard:hover { background: #333; }
+.btn-dashboard:hover { opacity: 0.88; }

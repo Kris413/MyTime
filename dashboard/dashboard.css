@@ -16,6 +16,10 @@
   --over-border:  #fecaca;
   --shadow:       0 1px 2px rgba(0,0,0,0.04), 0 6px 24px rgba(0,0,0,0.06);
   --radius:       20px;
+  /* ── Brand accent ── */
+  --accent:       #6366F1;   /* indigo */
+  --accent-bg:    #EEF2FF;   /* very light indigo */
+  --accent-mid:   rgba(99,102,241,0.12);
 }
 
 body {
@@ -53,16 +57,13 @@ body {
 .logo-icon {
   width: 36px;
   height: 36px;
-  background: var(--text-1);
-  color: #fff;
+  background: var(--accent);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
   flex-shrink: 0;
+  padding: 5px;
 }
 
 .logo-name {
@@ -135,8 +136,8 @@ body {
 }
 
 .period-btn.active {
-  background: var(--text-1);
-  border-color: var(--text-1);
+  background: var(--accent);
+  border-color: var(--accent);
   color: #fff;
 }
 
@@ -307,7 +308,7 @@ body {
 
 /* ── Hero card ── */
 .hero-card {
-  background: var(--surface);
+  background: linear-gradient(145deg, var(--accent-bg) 0%, #f4f5ff 20%, var(--surface) 55%);
   border-radius: var(--radius);
   padding: 36px 40px;
   box-shadow: var(--shadow);
@@ -779,7 +780,7 @@ body {
   flex-shrink: 0;
   width: 22px;
   height: 22px;
-  background: var(--text-1);
+  background: var(--accent);
   color: #fff;
   border-radius: 7px;
   display: flex;
@@ -810,13 +811,17 @@ body {
 }
 
 .heatmap-cell {
-  background: var(--text-1);
+  background: var(--accent);
   border-radius: 4px;
   cursor: default;
   transform-origin: bottom center;
   animation: cellGrow 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: var(--cell-delay, 0ms);
   transition: outline 0.1s;
+}
+
+.heatmap-cell:hover {
+  outline-color: var(--accent);
 }
 
 @keyframes cellGrow {
