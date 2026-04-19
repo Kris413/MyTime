@@ -109,7 +109,6 @@ body {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  position: relative; /* anchor for the calendar panel */
 }
 
 .period-tabs { display: flex; gap: 6px; }
@@ -143,13 +142,9 @@ body {
 
 /* ── Custom calendar picker ── */
 .cal-wrap {
-  display: none;
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  z-index: 150;
+  position: relative;   /* anchor for the dropdown */
+  display: inline-flex; /* shrinks to button size; sits in period-tabs flex row */
 }
-.cal-wrap.visible { display: block; }
 
 @keyframes calSlideIn {
   from { opacity: 0; transform: translateY(-6px); }
@@ -157,12 +152,21 @@ body {
 }
 
 .cal-panel {
+  display: none;          /* hidden by default */
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;               /* right-align with the 日历 button */
+  z-index: 150;
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 18px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
   width: 272px;
   padding: 18px 18px 14px;
+}
+
+.cal-wrap.visible .cal-panel {
+  display: block;
   animation: calSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 

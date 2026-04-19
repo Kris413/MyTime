@@ -29,32 +29,32 @@
         <button class="period-btn" data-period="week">本周</button>
         <button class="period-btn" data-period="month">本月</button>
         <button class="period-btn" data-period="year">今年</button>
-        <button class="period-btn" data-period="custom">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="3" width="12" height="11" rx="2"/><path d="M5 1v4M11 1v4M2 7h12"/>
-          </svg>
-          日历
-        </button>
-      </div>
-      <!-- Custom calendar panel (shown when "日历" period is active) -->
-      <div class="cal-wrap" id="calWrap">
-        <div class="cal-panel" id="calPanel">
-          <div class="cal-head">
-            <button class="cal-nav" id="calPrev" aria-label="上月">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10L4 6l4-4"/></svg>
-            </button>
-            <span class="cal-title" id="calTitle"></span>
-            <button class="cal-nav" id="calNext" aria-label="下月">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10l4-4-4-4"/></svg>
-            </button>
-          </div>
-          <div class="cal-weekdays">
-            <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
-          </div>
-          <div class="cal-grid" id="calGrid"></div>
-          <div class="cal-footer">
-            <button class="cal-foot-btn" id="calClear">清除</button>
-            <button class="cal-foot-btn cal-foot-today" id="calTodayBtn">今天</button>
+        <!-- cal-wrap anchors the panel below the 日历 button -->
+        <div class="cal-wrap" id="calWrap">
+          <button class="period-btn" data-period="custom">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="12" height="11" rx="2"/><path d="M5 1v4M11 1v4M2 7h12"/>
+            </svg>
+            <span id="calBtnLabel">日历</span>
+          </button>
+          <div class="cal-panel" id="calPanel">
+            <div class="cal-head">
+              <button class="cal-nav" id="calPrev" aria-label="上月">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10L4 6l4-4"/></svg>
+              </button>
+              <span class="cal-title" id="calTitle"></span>
+              <button class="cal-nav" id="calNext" aria-label="下月">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10l4-4-4-4"/></svg>
+              </button>
+            </div>
+            <div class="cal-weekdays">
+              <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+            <div class="cal-footer">
+              <button class="cal-foot-btn" id="calClear">清除</button>
+              <button class="cal-foot-btn cal-foot-today" id="calTodayBtn">今天</button>
+            </div>
           </div>
         </div>
       </div>

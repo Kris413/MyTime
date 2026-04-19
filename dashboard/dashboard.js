@@ -590,6 +590,18 @@ async function refresh() {
 let calViewYear  = new Date().getFullYear();
 let calViewMonth = new Date().getMonth(); // 0-based
 
+// Update "日历" button label: show selected date when a non-today date is picked
+function updateCalBtnLabel() {
+  const label    = document.getElementById('calBtnLabel');
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  if (currentPeriod === 'custom' && customDate && customDate !== todayStr) {
+    const d = new Date(customDate + 'T12:00:00');
+    label.textContent = `${d.getMonth() + 1}月${d.getDate()}日`;
+  } else {
+    label.textContent = '日历';
+  }
+}
+
 function renderCalendar() {
   const titleEl  = document.getElementById('calTitle');
   const gridEl   = document.getElementById('calGrid');
@@ -634,6 +646,9 @@ function renderCalendar() {
   gridEl.querySelectorAll('.cal-day').forEach(btn => {
     btn.addEventListener('click', () => {
       customDate = btn.dataset.date;
+      // Close panel after picking a date, update button label
+      document.getElementById('calWrap').classList.remove('visible');
+      updateCalBtnLabel();
       renderCalendar();
       refresh();
     });
@@ -649,13 +664,19 @@ document.getElementById('calNext').addEventListener('click', () => {
   renderCalendar();
 });
 document.getElementById('calClear').addEventListener('click', () => {
-  customDate = null; renderCalendar(); refresh();
+  customDate = null;
+  updateCalBtnLabel();
+  renderCalendar();
+  refresh();
 });
 document.getElementById('calTodayBtn').addEventListener('click', () => {
   const t = new Date();
   calViewYear = t.getFullYear(); calViewMonth = t.getMonth();
   customDate  = t.toLocaleDateString('en-CA');
-  renderCalendar(); refresh();
+  document.getElementById('calWrap').classList.remove('visible');
+  updateCalBtnLabel();
+  renderCalendar();
+  refresh();
 });
 
 // ── Period tabs ───────────────────────────────────────────────────────────────
@@ -667,16 +688,18 @@ document.querySelectorAll('.period-btn').forEach(btn => {
     currentPeriod = btn.dataset.period;
     const calWrap = document.getElementById('calWrap');
     if (currentPeriod === 'custom') {
-      calWrap.classList.add('visible');
+      // Re-open panel; default to today if no date picked yet
       if (!customDate) {
         const t = new Date();
         calViewYear = t.getFullYear(); calViewMonth = t.getMonth();
         customDate  = t.toLocaleDateString('en-CA');
       }
+      calWrap.classList.add('visible');
       renderCalendar();
     } else {
       calWrap.classList.remove('visible');
     }
+    updateCalBtnLabel(); // show date in button or revert to "日历"
     refresh();
   });
 });
