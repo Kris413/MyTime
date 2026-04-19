@@ -42,29 +42,34 @@ async function aiCall(messages, localKey, model = AI_MODEL) {
   }
 }
 
-// Batch-classify unknown domains using qwen-turbo (cheap)
-// Returns { 'taobao.com': '购物', 'bilibili.com': '娱乐', ... }
-async function batchCategorize(domains, localKey) {
+// Batch-identify unknown domains using qwen-turbo (cheap)
+// Returns { 'taobao.com': { name:'淘宝', category:'购物' }, ... }
+// If AI doesn't know the name, name falls back to the domain itself.
+async function batchIdentifySites(domains, localKey) {
   if (!domains.length) return {};
   const catList = Object.keys(CATEGORIES).filter(c => c !== '其他').join('、');
   const messages = [
     {
       role: 'system',
-      content: `你是网站分类助手。根据域名判断其所属类别，从以下选项中选一个最合适的：${catList}、其他。
-输出格式：每行一条，"域名:类别"，不要解释，不要多余文字。`,
+      content: `你是网站信息助手。根据域名，返回该网站的常用名称（优先中文，如无则英文品牌名）和所属类别。
+可选类别：${catList}、其他。
+输出格式：每行一条，"域名|名称|类别"，不要解释，不要多余文字。
+示例：
+taobao.com|淘宝|购物
+github.com|GitHub|工作效率
+unknown-xyz.io|unknown-xyz.io|其他`,
     },
     { role: 'user', content: domains.join('\n') },
   ];
   const text = await aiCall(messages, localKey, 'qwen-turbo');
-  const map = {};
+  const result = {};
   for (const line of text.trim().split('\n')) {
-    const idx = line.indexOf(':');
-    if (idx === -1) continue;
-    const domain = line.slice(0, idx).trim();
-    const cat    = line.slice(idx + 1).trim();
-    if (domain && cat) map[domain] = cat;
+    const parts = line.split('|').map(s => s.trim());
+    if (parts.length < 3) continue;
+    const [domain, name, category] = parts;
+    if (domain) result[domain] = { name: name || domain, category: category || '其他' };
   }
-  return map;
+  return result;
 }
 
 // ── Prompt builders ───────────────────────────────────────────────────────────

@@ -1,8 +1,8 @@
-let currentPeriod    = 'today';
-let customDate       = null;
-let settings         = { limits: {}, apiKey: '' };
-let aiCategoryCache  = {};   // { domain: category } persisted in storage
-let aiCatPending     = false; // guard: no concurrent batch calls
+let currentPeriod  = 'today';
+let customDate     = null;
+let settings       = { limits: {}, apiKey: '' };
+let aiSiteInfo     = {};   // { rootDomain: { name, category } } — persisted in 'ai-site-info'
+let aiSitePending  = false; // guard: no concurrent batch calls
 
 const SHOW_LIMIT = 5;
 
@@ -97,13 +97,19 @@ async function loadDomains(period, offset = 0) {
     for (const [domain, data] of Object.entries(dayData)) {
       if (domain === '_hourly') continue;
       const { seconds } = data;
-      // Apply AI cache: replace '其他' with AI-determined category if available
+      // Aggregate by root domain (i.taobao.com + taobao.com → taobao.com)
+      const root = getRootDomain(domain);
+      // Prefer AI-identified category; fall back to stored category
+      const siteAI  = aiSiteInfo[root];
       const rawCat  = data.category;
-      const category = (rawCat === '其他' && aiCategoryCache[domain] && aiCategoryCache[domain] !== '其他')
-        ? aiCategoryCache[domain] : rawCat;
-      if (!domains[domain]) domains[domain] = { category, seconds: 0 };
-      domains[domain].seconds += seconds;
-      if (data.title) domains[domain].title = data.title;
+      const category = (siteAI?.category && siteAI.category !== '其他')
+        ? siteAI.category
+        : (rawCat !== '其他' ? rawCat : (siteAI?.category || '其他'));
+      if (!domains[root]) domains[root] = { category, seconds: 0 };
+      else if (domains[root].category === '其他' && category !== '其他') {
+        domains[root].category = category; // upgrade if we learn a better cat later
+      }
+      domains[root].seconds += seconds;
     }
   }
   if (period === 'today' && offset > 0) {
@@ -131,37 +137,50 @@ async function loadSettings() {
   settings = r.settings || { limits: {}, apiKey: '' };
 }
 
-async function loadAICategories() {
-  const r = await chrome.storage.local.get('ai-categories');
-  aiCategoryCache = r['ai-categories'] || {};
+async function loadAISiteInfo() {
+  const [r1, r2] = await Promise.all([
+    chrome.storage.local.get('ai-site-info'),
+    chrome.storage.local.get('ai-categories'),  // legacy format migration
+  ]);
+  aiSiteInfo = r1['ai-site-info'] || {};
+  // Migrate old { domain: categoryString } → new { domain: { name, category } }
+  const legacy = r2['ai-categories'] || {};
+  let migrated = false;
+  for (const [domain, cat] of Object.entries(legacy)) {
+    if (typeof cat === 'string' && !aiSiteInfo[domain]) {
+      aiSiteInfo[domain] = { name: domain, category: cat };
+      migrated = true;
+    }
+  }
+  if (migrated) {
+    await chrome.storage.local.set({ 'ai-site-info': aiSiteInfo });
+    await chrome.storage.local.remove('ai-categories');
+  }
 }
 
-// Find domains still "其他" and not yet cached, batch-classify them, then re-render
-async function runAICategorization(uncategorized) {
-  if (!uncategorized.length || aiCatPending) return;
-  aiCatPending = true;
+// Batch-identify unknown root domains, cache name+category, then re-render
+async function runAISiteIdentification(unknownDomains) {
+  if (!unknownDomains.length || aiSitePending) return;
+  aiSitePending = true;
 
-  // Show subtle hint in chart card title
-  const chartLabel = document.querySelector('#chart')?.closest('.card')?.querySelector('.card-label');
-  if (chartLabel) chartLabel.dataset.hint = `AI 识别 ${uncategorized.length} 个网站…`;
+  const siteLabel = document.querySelector('#sites')?.closest('.card')?.querySelector('.card-label');
+  if (siteLabel) siteLabel.dataset.hint = `AI 识别 ${unknownDomains.length} 个网站…`;
 
   try {
     const BATCH = 20;
-    for (let i = 0; i < uncategorized.length; i += BATCH) {
-      const batch = uncategorized.slice(i, i + BATCH);
-      const result = await batchCategorize(batch, settings.apiKey || null);
-      // Cache all results (including '其他') to avoid re-querying the same domain
-      Object.assign(aiCategoryCache, result);
+    for (let i = 0; i < unknownDomains.length; i += BATCH) {
+      const batch = unknownDomains.slice(i, i + BATCH);
+      const result = await batchIdentifySites(batch, settings.apiKey || null);
+      Object.assign(aiSiteInfo, result);
     }
-    await chrome.storage.local.set({ 'ai-categories': aiCategoryCache });
-    // Re-render with updated categories
-    if (chartLabel) delete chartLabel.dataset.hint;
+    await chrome.storage.local.set({ 'ai-site-info': aiSiteInfo });
+    if (siteLabel) delete siteLabel.dataset.hint;
     await refresh();
   } catch (e) {
-    console.warn('[MyTime] AI categorize failed:', e);
-    if (chartLabel) delete chartLabel.dataset.hint;
+    console.warn('[MyTime] AI site identify failed:', e);
+    if (siteLabel) delete siteLabel.dataset.hint;
   } finally {
-    aiCatPending = false;
+    aiSitePending = false;
   }
 }
 
@@ -387,25 +406,25 @@ function renderSites(domains) {
   const maxSec  = sorted[0][1].seconds;
   const hasMore = sorted.length > SHOW_LIMIT;
 
-  const rows = sorted.map(([domain, { category, seconds, title }], i) => {
-    const color      = getCategoryColor(category);
-    const pct        = Math.round((seconds / maxSec) * 100);
-    const extraClass = i >= SHOW_LIMIT ? ' extra' : '';
-    const rootDomain = getRootDomain(domain);
-    // Primary name: page title if distinct from domain, else root domain
-    const displayName   = (title && title !== domain && title !== rootDomain) ? title : rootDomain;
-    const showRootBelow = displayName !== rootDomain; // only show root on 2nd line when title is showing
+  const rows = sorted.map(([rootDomain, { category, seconds }], i) => {
+    const color       = getCategoryColor(category);
+    const pct         = Math.round((seconds / maxSec) * 100);
+    const extraClass  = i >= SHOW_LIMIT ? ' extra' : '';
+    // Use AI-identified name; fall back to root domain
+    const siteAI      = aiSiteInfo[rootDomain];
+    const displayName = (siteAI?.name && siteAI.name !== rootDomain) ? siteAI.name : rootDomain;
+    const showRoot    = displayName !== rootDomain; // show domain on 2nd line only when name differs
     return `
       <div class="site-row${extraClass}">
         <div class="site-rank">${padRank(i+1)}</div>
         <div class="site-info">
           <div class="site-domain-row">
-            <img class="site-favicon" src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" loading="lazy" onerror="this.style.display='none'">
+            <img class="site-favicon" src="https://www.google.com/s2/favicons?domain=${rootDomain}&sz=32" loading="lazy" onerror="this.style.display='none'">
             <span class="site-name">${displayName}</span>
           </div>
           <div class="site-sub">
             <span class="site-cat-tag">${category}</span>
-            ${showRootBelow ? `<span class="site-root">${rootDomain}</span>` : ''}
+            ${showRoot ? `<span class="site-root">${rootDomain}</span>` : ''}
           </div>
         </div>
         <div class="site-bar-track">
@@ -541,11 +560,9 @@ async function refresh() {
   renderChart(catData, prevMap);
   renderSites(domains);
 
-  // Trigger AI categorization for domains still in '其他' and not yet cached
-  const uncategorized = Object.entries(domains)
-    .filter(([d, { category }]) => category === '其他' && !(d in aiCategoryCache))
-    .map(([d]) => d);
-  if (uncategorized.length) runAICategorization(uncategorized);
+  // Trigger AI identification for root domains not yet in aiSiteInfo
+  const unknownDomains = Object.keys(domains).filter(d => !(d in aiSiteInfo));
+  if (unknownDomains.length) runAISiteIdentification(unknownDomains);
 }
 
 // ── Period tabs ───────────────────────────────────────────────────────────────
@@ -572,7 +589,7 @@ document.getElementById('datePicker').addEventListener('change', e => {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 async function init() {
-  await Promise.all([loadSettings(), loadAICategories()]);
+  await Promise.all([loadSettings(), loadAISiteInfo()]);
   chrome.runtime.sendMessage({ type: 'flush' }, () => {
     if (chrome.runtime.lastError) console.warn('flush:', chrome.runtime.lastError.message);
     refresh();

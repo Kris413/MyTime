@@ -281,7 +281,7 @@ body {
   letter-spacing: -0.02em;
 }
 
-/* AI categorization in-progress hint */
+/* AI identification in-progress hint (appended to card-label via data-hint attribute) */
 .card-label[data-hint]::after {
   content: attr(data-hint);
   font-size: 11px;
@@ -289,6 +289,12 @@ body {
   color: var(--text-3);
   margin-left: 10px;
   letter-spacing: 0;
+  animation: hintPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1;   }
 }
 
 .empty {
