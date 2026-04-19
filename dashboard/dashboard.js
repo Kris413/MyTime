@@ -31,13 +31,27 @@ function formatTime(s) {
 }
 function padRank(n) { return String(n).padStart(2, '0'); }
 
+// Extract root/registrable domain: i.taobao.com → taobao.com, bbc.co.uk → bbc.co.uk
+function getRootDomain(domain) {
+  const parts = domain.split('.');
+  if (parts.length <= 2) return domain;
+  const tld = parts[parts.length - 1];
+  const sld = parts[parts.length - 2];
+  // Country-code + generic second-level: co.uk, com.cn, org.uk, etc.
+  if (tld.length === 2 && ['com','co','org','net','gov','edu'].includes(sld)) {
+    return parts.slice(-3).join('.');
+  }
+  return parts.slice(-2).join('.');
+}
+
 // ── Limit helpers ─────────────────────────────────────────────────────────────
 
 function getLimit(cat)       { return settings.limits[cat] || null; }
 function catStatus(cat, sec) {
-  const limit = getLimit(cat), threshold = limit || OVER_LIMIT_SECONDS;
-  if (sec >= threshold) return 'over';
-  if (limit && sec >= limit * 0.8) return 'near';
+  const limit = getLimit(cat);
+  if (!limit) return 'ok';          // 未设置上限 → 永不超时
+  if (sec >= limit) return 'over';
+  if (sec >= limit * 0.8) return 'near';
   return 'ok';
 }
 
@@ -374,11 +388,13 @@ function renderSites(domains) {
   const hasMore = sorted.length > SHOW_LIMIT;
 
   const rows = sorted.map(([domain, { category, seconds, title }], i) => {
-    const color       = getCategoryColor(category);
-    const pct         = Math.round((seconds / maxSec) * 100);
-    const extraClass  = i >= SHOW_LIMIT ? ' extra' : '';
-    const displayName = title || domain;
-    const subText     = title ? `${domain} · ${category}` : category;
+    const color      = getCategoryColor(category);
+    const pct        = Math.round((seconds / maxSec) * 100);
+    const extraClass = i >= SHOW_LIMIT ? ' extra' : '';
+    const rootDomain = getRootDomain(domain);
+    // Primary name: page title if distinct from domain, else root domain
+    const displayName   = (title && title !== domain && title !== rootDomain) ? title : rootDomain;
+    const showRootBelow = displayName !== rootDomain; // only show root on 2nd line when title is showing
     return `
       <div class="site-row${extraClass}">
         <div class="site-rank">${padRank(i+1)}</div>
@@ -387,7 +403,10 @@ function renderSites(domains) {
             <img class="site-favicon" src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" loading="lazy" onerror="this.style.display='none'">
             <span class="site-name">${displayName}</span>
           </div>
-          <div class="site-sub">${subText}</div>
+          <div class="site-sub">
+            <span class="site-cat-tag">${category}</span>
+            ${showRootBelow ? `<span class="site-root">${rootDomain}</span>` : ''}
+          </div>
         </div>
         <div class="site-bar-track">
           <div class="site-bar-fill" style="width:0;background:${color}" data-w="${pct}%"></div>

@@ -95,8 +95,10 @@ body {
 
 .cat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .cat-time { font-size: 12px; color: #6b6b6b; }
-.cat-item.over-limit .cat-time { color: #d97706; font-weight: 600; }
-.warn-badge { font-size: 10px; background: #fef3c7; color: #d97706; padding: 1px 5px; border-radius: 3px; }
+.cat-item.over-limit .cat-time { color: #ef4444; font-weight: 600; }
+.cat-item.near-limit .cat-time { color: #d97706; font-weight: 600; }
+.warn-badge      { font-size: 10px; background: #fef2f2; color: #ef4444; padding: 1px 5px; border-radius: 3px; }
+.warn-badge.near { background: #fef3c7; color: #d97706; }
 .bar-track  { height: 3px; background: #f0ede8; border-radius: 2px; overflow: hidden; }
 .bar-fill   { height: 100%; border-radius: 2px; transition: width 0.5s cubic-bezier(0.16,1,0.3,1); }
 

@@ -483,9 +483,28 @@ body {
 }
 
 .site-sub {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+}
+
+.site-cat-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--bg);
+  color: var(--text-3);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 99px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.site-root {
   font-size: 11px;
   color: var(--text-3);
-  margin-top: 1px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

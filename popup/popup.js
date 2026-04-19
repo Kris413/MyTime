@@ -17,25 +17,28 @@ function aggregateByCategory(dayData) {
   return Object.entries(cats).sort((a, b) => b[1] - a[1]);
 }
 
-function renderCategories(catData) {
+function renderCategories(catData, limits = {}) {
   const el = document.getElementById('categories');
   if (!catData.length) { el.innerHTML = '<div class="placeholder">今天还没有记录到数据</div>'; return; }
 
-  const maxSec  = catData[0][1];
+  const maxSec   = catData[0][1];
   const totalSec = catData.reduce((s, [, sec]) => s + sec, 0);
   document.getElementById('totalTime').textContent = formatTime(totalSec);
 
   el.innerHTML = catData.map(([cat, sec]) => {
     const color = getCategoryColor(cat);
     const pct   = Math.round((sec / maxSec) * 100);
-    const over  = sec >= OVER_LIMIT_SECONDS;
+    // 超时仅在用户手动设置了上限且超出时触发
+    const limit = limits[cat] || 0;
+    const over  = limit > 0 && sec >= limit;
+    const near  = limit > 0 && !over && sec >= limit * 0.8;
     return `
-      <div class="cat-item ${over ? 'over-limit' : ''}">
+      <div class="cat-item ${over ? 'over-limit' : near ? 'near-limit' : ''}">
         <div class="cat-header">
           <div class="cat-name">
             <div class="cat-dot" style="background:${color}"></div>
             <span>${cat}</span>
-            ${over ? '<span class="warn-badge">超时</span>' : ''}
+            ${over ? '<span class="warn-badge">超时</span>' : near ? '<span class="warn-badge near">接近</span>' : ''}
           </div>
           <span class="cat-time">${formatTime(sec)}</span>
         </div>
@@ -122,8 +125,12 @@ async function init() {
   document.getElementById('date').textContent = new Date().toLocaleDateString('zh-CN', {
     month: 'long', day: 'numeric', weekday: 'short',
   });
-  const dayData = await loadTodayData();
-  renderCategories(aggregateByCategory(dayData));
+  const [dayData, settingsRes] = await Promise.all([
+    loadTodayData(),
+    new Promise(res => chrome.storage.local.get('settings', d => res(d))),
+  ]);
+  const limits = settingsRes.settings?.limits || {};
+  renderCategories(aggregateByCategory(dayData), limits);
   await checkReportBadge();
 }
 
