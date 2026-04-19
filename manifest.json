@@ -5,7 +5,7 @@
   "description": "记录和分析你的浏览器使用时间",
   "permissions": ["tabs", "storage", "alarms", "notifications"],
   "host_permissions": [
-    "https://brainboom.top/*",
+    "https://www.brainboom.top/*",
     "https://dashscope.aliyuncs.com/*"
   ],
   "icons": {
