@@ -585,6 +585,79 @@ async function refresh() {
   if (unknownDomains.length) runAISiteIdentification(unknownDomains);
 }
 
+// ── Custom calendar ───────────────────────────────────────────────────────────
+
+let calViewYear  = new Date().getFullYear();
+let calViewMonth = new Date().getMonth(); // 0-based
+
+function renderCalendar() {
+  const titleEl  = document.getElementById('calTitle');
+  const gridEl   = document.getElementById('calGrid');
+  const y = calViewYear, m = calViewMonth;
+
+  titleEl.textContent = `${y}年${m + 1}月`;
+
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const firstDow = new Date(y, m, 1).getDay();        // 0=Sun
+  const lastDate = new Date(y, m + 1, 0).getDate();
+  const prevLast = new Date(y, m, 0).getDate();
+
+  const prevY = m === 0 ? y - 1 : y, prevM = m === 0 ? 11 : m - 1;
+  const nextY = m === 11 ? y + 1 : y, nextM = m === 11 ? 0 : m + 1;
+
+  const totalCells = Math.ceil((firstDow + lastDate) / 7) * 7;
+  const cells = [];
+
+  for (let i = 0; i < totalCells; i++) {
+    let d, ds, other = false;
+    if (i < firstDow) {
+      d = prevLast - firstDow + 1 + i;
+      ds = `${prevY}-${String(prevM + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      other = true;
+    } else if (i < firstDow + lastDate) {
+      d = i - firstDow + 1;
+      ds = `${y}-${String(m + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    } else {
+      d = i - firstDow - lastDate + 1;
+      ds = `${nextY}-${String(nextM + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      other = true;
+    }
+    const cls = [
+      other ? 'other-month' : '',
+      ds === todayStr  ? 'today'    : '',
+      ds === customDate ? 'selected' : '',
+    ].filter(Boolean).join(' ');
+    cells.push(`<button class="cal-day${cls ? ' ' + cls : ''}" data-date="${ds}">${d}</button>`);
+  }
+
+  gridEl.innerHTML = cells.join('');
+  gridEl.querySelectorAll('.cal-day').forEach(btn => {
+    btn.addEventListener('click', () => {
+      customDate = btn.dataset.date;
+      renderCalendar();
+      refresh();
+    });
+  });
+}
+
+document.getElementById('calPrev').addEventListener('click', () => {
+  if (--calViewMonth < 0) { calViewMonth = 11; calViewYear--; }
+  renderCalendar();
+});
+document.getElementById('calNext').addEventListener('click', () => {
+  if (++calViewMonth > 11) { calViewMonth = 0; calViewYear++; }
+  renderCalendar();
+});
+document.getElementById('calClear').addEventListener('click', () => {
+  customDate = null; renderCalendar(); refresh();
+});
+document.getElementById('calTodayBtn').addEventListener('click', () => {
+  const t = new Date();
+  calViewYear = t.getFullYear(); calViewMonth = t.getMonth();
+  customDate  = t.toLocaleDateString('en-CA');
+  renderCalendar(); refresh();
+});
+
 // ── Period tabs ───────────────────────────────────────────────────────────────
 
 document.querySelectorAll('.period-btn').forEach(btn => {
@@ -592,18 +665,20 @@ document.querySelectorAll('.period-btn').forEach(btn => {
     document.querySelector('.period-btn.active').classList.remove('active');
     btn.classList.add('active');
     currentPeriod = btn.dataset.period;
-    const picker  = document.getElementById('datePicker');
+    const calWrap = document.getElementById('calWrap');
     if (currentPeriod === 'custom') {
-      picker.classList.add('visible');
-      if (!picker.value) picker.value = new Date().toLocaleDateString('en-CA');
-      customDate = picker.value;
-    } else { picker.classList.remove('visible'); }
+      calWrap.classList.add('visible');
+      if (!customDate) {
+        const t = new Date();
+        calViewYear = t.getFullYear(); calViewMonth = t.getMonth();
+        customDate  = t.toLocaleDateString('en-CA');
+      }
+      renderCalendar();
+    } else {
+      calWrap.classList.remove('visible');
+    }
     refresh();
   });
-});
-
-document.getElementById('datePicker').addEventListener('change', e => {
-  customDate = e.target.value; refresh();
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────────
