@@ -464,13 +464,25 @@ function renderAIContent(text) {
 
   for (const line of lines) {
     const t = line.trim();
-    // Detect numbered points: ①②③ or 1. 2. 1、 etc.
-    if (/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(t) || /^\d+[.、：]/.test(t)) {
+    // Circled numbers ①②③…
+    if (/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(t)) {
       if (introLines.length) {
         parts.push(`<p class="ai-intro">${introLines.join('<br>')}</p>`);
         introLines.length = 0;
       }
-      parts.push(`<div class="ai-point">${t}</div>`);
+      const num  = t[0];          // ①
+      const body = t.slice(1).trim();
+      parts.push(`<div class="ai-point"><span class="ai-num">${num}</span><span class="ai-body">${body}</span></div>`);
+    // Digit-prefix: 1. 2、 3：
+    } else if (/^\d+[.、：]/.test(t)) {
+      if (introLines.length) {
+        parts.push(`<p class="ai-intro">${introLines.join('<br>')}</p>`);
+        introLines.length = 0;
+      }
+      const m    = t.match(/^(\d+[.、：]\s*)/);
+      const num  = m ? m[1].trim() : '';
+      const body = m ? t.slice(m[0].length).trim() : t;
+      parts.push(`<div class="ai-point"><span class="ai-num">${num}</span><span class="ai-body">${body}</span></div>`);
     } else {
       introLines.push(t);
     }
