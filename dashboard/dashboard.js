@@ -456,6 +456,10 @@ function renderSites(domains) {
 
 // ── AI Analysis ───────────────────────────────────────────────────────────────
 
+// Map circled numbers to plain digits for the badge
+const CIRC_TO_DIGIT = { '①':'1','②':'2','③':'3','④':'4','⑤':'5',
+                         '⑥':'6','⑦':'7','⑧':'8','⑨':'9','⑩':'10' };
+
 function renderAIContent(text) {
   if (!text) return '';
   const lines = text.trim().split('\n').filter(l => l.trim());
@@ -464,25 +468,25 @@ function renderAIContent(text) {
 
   for (const line of lines) {
     const t = line.trim();
-    // Circled numbers ①②③…
+    // Circled numbers ①②③… → convert to plain digit for badge
     if (/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(t)) {
       if (introLines.length) {
         parts.push(`<p class="ai-intro">${introLines.join('<br>')}</p>`);
         introLines.length = 0;
       }
-      const num  = t[0];          // ①
-      const body = t.slice(1).trim();
-      parts.push(`<div class="ai-point"><span class="ai-num">${num}</span><span class="ai-body">${body}</span></div>`);
+      const digit = CIRC_TO_DIGIT[t[0]] || t[0];
+      const body  = t.slice(1).trim();
+      parts.push(`<div class="ai-point"><span class="ai-num">${digit}</span><span class="ai-body">${body}</span></div>`);
     // Digit-prefix: 1. 2、 3：
     } else if (/^\d+[.、：]/.test(t)) {
       if (introLines.length) {
         parts.push(`<p class="ai-intro">${introLines.join('<br>')}</p>`);
         introLines.length = 0;
       }
-      const m    = t.match(/^(\d+[.、：]\s*)/);
-      const num  = m ? m[1].trim() : '';
-      const body = m ? t.slice(m[0].length).trim() : t;
-      parts.push(`<div class="ai-point"><span class="ai-num">${num}</span><span class="ai-body">${body}</span></div>`);
+      const m     = t.match(/^(\d+)[.、：]\s*/);
+      const digit = m ? m[1] : '';
+      const body  = m ? t.slice(m[0].length).trim() : t;
+      parts.push(`<div class="ai-point"><span class="ai-num">${digit}</span><span class="ai-body">${body}</span></div>`);
     } else {
       introLines.push(t);
     }

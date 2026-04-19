@@ -766,21 +766,29 @@ body {
 
 /* Each point: number badge on left, body text on right */
 .ai-point {
-  display: grid;
-  grid-template-columns: 22px 1fr;
-  gap: 10px;
-  padding: 15px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 16px 0;
   border-bottom: 1px solid var(--border);
 }
 .ai-point:last-child { border-bottom: none; padding-bottom: 4px; }
 
 .ai-num {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-3);
-  line-height: 1.85;
-  padding-top: 1px;
-  letter-spacing: -0.01em;
+  /* Solid rounded-square badge — mirrors the logo-icon design language */
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  background: var(--text-1);
+  color: #fff;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 1px; /* optical alignment with first text line */
   user-select: none;
 }
 
@@ -788,6 +796,7 @@ body {
   font-size: 13.5px;
   line-height: 1.85;
   color: var(--text-1);
+  flex: 1;
 }
 
 /* ── Heatmap ── */

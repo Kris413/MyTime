@@ -12,8 +12,12 @@ function getYesterday() { const d = new Date(); d.setDate(d.getDate() - 1); retu
 
 function aggregateByCategory(dayData) {
   const cats = {};
-  for (const [, { category, seconds }] of Object.entries(dayData))
+  for (const [domain, data] of Object.entries(dayData)) {
+    if (domain === '_hourly') continue; // skip hourly bucket — it's not a site entry
+    const { category, seconds } = data;
+    if (!category || seconds == null) continue; // guard against malformed entries
     cats[category] = (cats[category] || 0) + seconds;
+  }
   return Object.entries(cats).sort((a, b) => b[1] - a[1]);
 }
 
