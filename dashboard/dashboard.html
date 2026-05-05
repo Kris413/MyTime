@@ -83,23 +83,67 @@
       <div class="col-left">
 
         <section class="hero-card">
-          <div class="hero-period" id="heroPeriod">今日总计</div>
-          <div class="hero-time" id="totalTime">—</div>
-          <div class="hero-divider"></div>
-          <div class="hero-meta">
-            <div class="hero-meta-item">
-              <div class="hero-meta-value" id="totalCats">—</div>
-              <div class="hero-meta-label">活跃类别</div>
+          <!-- Data content -->
+          <div class="hero-content">
+            <div class="hero-period" id="heroPeriod">今日总计</div>
+            <div class="hero-time" id="totalTime">—</div>
+            <div class="hero-divider"></div>
+            <div class="hero-meta">
+              <div class="hero-meta-item">
+                <div class="hero-meta-value" id="totalCats">—</div>
+                <div class="hero-meta-label">活跃类别</div>
+              </div>
+              <div class="hero-meta-sep"></div>
+              <div class="hero-meta-item">
+                <div class="hero-meta-value" id="totalSites">—</div>
+                <div class="hero-meta-label">访问网站</div>
+              </div>
+              <div class="hero-meta-sep" id="overSep" style="display:none"></div>
+              <div class="hero-meta-item" id="overItem" style="display:none">
+                <div class="hero-meta-value warn" id="overCount">—</div>
+                <div class="hero-meta-label">超出上限</div>
+              </div>
             </div>
-            <div class="hero-meta-sep"></div>
-            <div class="hero-meta-item">
-              <div class="hero-meta-value" id="totalSites">—</div>
-              <div class="hero-meta-label">访问网站</div>
+          </div>
+
+          <!-- Blob illustrations — purely decorative -->
+          <div class="hero-illustrations" aria-hidden="true">
+            <!-- Clock blob (amber/yellow) -->
+            <div class="hero-blob-left">
+              <svg width="72" height="90" viewBox="0 0 72 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 36 C-4 34,-7 46,2 52" stroke="#C9920A" stroke-width="4.5" stroke-linecap="round"/>
+                <path d="M67 36 C76 34,79 46,70 52" stroke="#C9920A" stroke-width="4.5" stroke-linecap="round"/>
+                <path d="M24 66 C20 78,14 84,10 90" stroke="#C9920A" stroke-width="4.5" stroke-linecap="round"/>
+                <path d="M50 66 C54 78,60 84,64 90" stroke="#C9920A" stroke-width="4.5" stroke-linecap="round"/>
+                <path d="M36 6 C52 4,68 16,68 34 C68 52,56 66,38 68 C20 70,4 58,4 40 C4 20,18 8,36 6Z" fill="#FFBB26"/>
+                <circle cx="36" cy="26" r="13" fill="rgba(255,255,255,0.38)" stroke="rgba(201,146,10,0.4)" stroke-width="1.5"/>
+                <line x1="36" y1="26" x2="36" y2="16" stroke="#2c2b2a" stroke-width="2" stroke-linecap="round"/>
+                <line x1="36" y1="26" x2="44" y2="26" stroke="#2c2b2a" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="36" cy="26" r="2.5" fill="#C9920A"/>
+                <circle cx="27" cy="46" r="3.5" fill="#2c2b2a"/>
+                <circle cx="47" cy="46" r="3.5" fill="#2c2b2a"/>
+                <circle cx="28.3" cy="44.7" r="1.4" fill="white"/>
+                <circle cx="48.3" cy="44.7" r="1.4" fill="white"/>
+                <path d="M27 57 Q36 65 47 57" stroke="#2c2b2a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              </svg>
             </div>
-            <div class="hero-meta-sep" id="overSep" style="display:none"></div>
-            <div class="hero-meta-item" id="overItem" style="display:none">
-              <div class="hero-meta-value warn" id="overCount">—</div>
-              <div class="hero-meta-label">超出上限</div>
+            <!-- Chart blob (green) -->
+            <div class="hero-blob-right">
+              <svg width="72" height="90" viewBox="0 0 72 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 38 C-4 36,-7 48,2 54" stroke="#009A38" stroke-width="4.5" stroke-linecap="round"/>
+                <path d="M69 38 C78 36,81 48,72 54" stroke="#009A38" stroke-width="4.5" stroke-linecap="round"/>
+                <path d="M25 68 C21 80,15 86,10 90" stroke="#009A38" stroke-width="4.5" stroke-linecap="round"/>
+                <path d="M53 68 C57 80,63 86,67 90" stroke="#009A38" stroke-width="4.5" stroke-linecap="round"/>
+                <path d="M38 6 C54 4,70 18,70 36 C70 54,58 68,40 70 C22 72,4 60,4 42 C4 22,20 8,38 6Z" fill="#00CA48"/>
+                <circle cx="28" cy="28" r="3.5" fill="#2c2b2a"/>
+                <circle cx="50" cy="28" r="3.5" fill="#2c2b2a"/>
+                <circle cx="29.3" cy="26.7" r="1.4" fill="white"/>
+                <circle cx="51.3" cy="26.7" r="1.4" fill="white"/>
+                <path d="M27 38 Q39 47 53 38" stroke="#2c2b2a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                <rect x="22" y="56" width="8" height="14" rx="2.5" fill="rgba(255,255,255,0.55)"/>
+                <rect x="33" y="49" width="8" height="21" rx="2.5" fill="rgba(255,255,255,0.75)"/>
+                <rect x="44" y="43" width="8" height="27" rx="2.5" fill="rgba(255,255,255,0.92)"/>
+              </svg>
             </div>
           </div>
         </section>
