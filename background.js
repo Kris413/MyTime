@@ -85,7 +85,13 @@ chrome.windows.onFocusChanged.addListener(async (windowId) => {
   if (windowId === chrome.windows.WINDOW_ID_NONE) {
     await stopTracking();
   } else {
-    try { const [tab] = await chrome.tabs.query({ active: true, windowId }); if (tab) await startTracking(tab); } catch {}
+    try {
+      const win = await chrome.windows.get(windowId);
+      // Minimized windows are not visible — treat as unfocused
+      if (win.state === 'minimized') { await stopTracking(); return; }
+      const [tab] = await chrome.tabs.query({ active: true, windowId });
+      if (tab) await startTracking(tab);
+    } catch {}
   }
 });
 
@@ -206,8 +212,16 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   try {
     const { activeTab: saved } = await chrome.storage.session.get('activeTab');
     if (saved) await saveElapsed(saved.domain, saved.startTime, saved.title || '');
-    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-    if (tab) await startTracking(tab);
+    // Only start tracking if a Chrome window is actually in the foreground.
+    // `lastFocusedWindow` returns the last-used window even when Chrome has no
+    // OS focus (e.g. user is on another Space / macOS desktop), so we use
+    // getAll() and look for a window with focused:true and not minimized.
+    const windows = await chrome.windows.getAll();
+    const focusedWin = windows.find(w => w.focused && w.state !== 'minimized');
+    if (focusedWin) {
+      const [tab] = await chrome.tabs.query({ active: true, windowId: focusedWin.id });
+      if (tab) await startTracking(tab);
+    }
   } catch {}
   scheduleDailyAlarm();
 })();
