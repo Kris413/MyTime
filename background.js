@@ -106,6 +106,17 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
 });
 
+// ── Report helpers ────────────────────────────────────────────────────────────
+
+// Returns the Monday of the current week as an 'en-CA' date string (YYYY-MM-DD)
+function getWeekMondayKey() {
+  const now = new Date();
+  const day = now.getDay(); // 0 = Sun
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+  return `report-week-${monday.toLocaleDateString('en-CA')}`;
+}
+
 // ── Daily report ──────────────────────────────────────────────────────────────
 
 async function getSettings() {
@@ -189,6 +200,89 @@ async function generateDailyReport() {
   });
 }
 
+// ── Weekly report ─────────────────────────────────────────────────────────────
+
+async function generateWeeklyReport() {
+  const weekKey = getWeekMondayKey();
+
+  // Skip if already generated this week
+  const existing = await chrome.storage.local.get(weekKey);
+  if (existing[weekKey]) return;
+
+  // Compute Mon → today (Sunday when the alarm fires)
+  const now = new Date();
+  const day = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+
+  const keys = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    if (d > now) break;
+    keys.push(d.toLocaleDateString('en-CA'));
+  }
+
+  const stored = await chrome.storage.local.get(keys);
+  if (!Object.keys(stored).length) return;
+
+  // Aggregate domains & categories for this week
+  const cats = {}, sites = {};
+  for (const dayData of Object.values(stored)) {
+    for (const [domain, data] of Object.entries(dayData)) {
+      if (domain === '_hourly') continue;
+      const { category, seconds } = data;
+      cats[category] = (cats[category] || 0) + seconds;
+      if (!sites[domain]) sites[domain] = { category, seconds: 0 };
+      sites[domain].seconds += seconds;
+    }
+  }
+  if (!Object.keys(cats).length) return;
+
+  const catData  = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+  const topSites = Object.entries(sites).sort((a, b) => b[1].seconds - a[1].seconds);
+
+  // Previous week for comparison
+  const prevMonday = new Date(monday);
+  prevMonday.setDate(monday.getDate() - 7);
+  const prevKeys = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(prevMonday);
+    d.setDate(prevMonday.getDate() + i);
+    return d.toLocaleDateString('en-CA');
+  });
+  const prevStored = await chrome.storage.local.get(prevKeys);
+  const prevMap = {};
+  for (const dayData of Object.values(prevStored)) {
+    for (const [domain, data] of Object.entries(dayData)) {
+      if (domain === '_hourly') continue;
+      prevMap[data.category] = (prevMap[data.category] || 0) + data.seconds;
+    }
+  }
+
+  const settings = await getSettings();
+  const label = `${monday.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}—${now.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}`;
+  const messages = buildWeeklyMessages(catData, topSites, prevMap, settings.limits, label);
+
+  let content;
+  try {
+    content = await aiCall(messages, settings.apiKey || null);
+  } catch (err) {
+    console.error('[MyTime] Weekly report AI call failed:', err);
+    return;
+  }
+
+  const report = { type: 'week', label, generatedAt: Date.now(), content,
+                   summary: content.replace(/\n/g, ' ').slice(0, 100) };
+  await chrome.storage.local.set({ [weekKey]: report });
+
+  chrome.notifications.create('mytime-weekly', {
+    type: 'basic',
+    iconUrl: 'icons/icon48.png',
+    title: 'MyTime · 本周周报已生成',
+    message: report.summary,
+  });
+}
+
 // ── Alarms ───────────────────────────────────────────────────────────────────
 
 function scheduleDailyAlarm() {
@@ -202,8 +296,25 @@ function scheduleDailyAlarm() {
   });
 }
 
+function scheduleWeeklyAlarm() {
+  const now = new Date();
+  const target = new Date(now);
+  target.setHours(22, 0, 0, 0);
+  // Fire today only if today IS Sunday and 22:00 hasn't passed yet
+  if (now.getDay() !== 0 || now >= target) {
+    const daysUntilSun = (7 - now.getDay()) % 7 || 7;
+    target.setDate(now.getDate() + daysUntilSun);
+    target.setHours(22, 0, 0, 0);
+  }
+  chrome.alarms.create('weeklyReport', {
+    when: target.getTime(),
+    periodInMinutes: 7 * 24 * 60,
+  });
+}
+
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === 'dailyReport') await generateDailyReport();
+  if (alarm.name === 'dailyReport')  await generateDailyReport();
+  if (alarm.name === 'weeklyReport') await generateWeeklyReport();
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────────
@@ -224,4 +335,5 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     }
   } catch {}
   scheduleDailyAlarm();
+  scheduleWeeklyAlarm();
 })();

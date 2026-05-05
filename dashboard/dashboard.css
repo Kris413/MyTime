@@ -748,7 +748,19 @@ body {
   letter-spacing: 0.02em;
 }
 
-.ai-date { font-size: 11.5px; color: var(--text-3); }
+.ai-date { font-size: 11.5px; color: var(--text-3); flex: 1; }
+
+.ai-regen-btn {
+  font-size: 11.5px;
+  color: var(--text-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.ai-regen-btn:hover { color: var(--accent); }
 
 /* AI content blocks */
 .ai-content {

@@ -456,6 +456,18 @@ function renderSites(domains) {
 
 // ── AI Analysis ───────────────────────────────────────────────────────────────
 
+// Storage key for the current week's / month's report
+function getReportKey(type) {
+  const now = new Date();
+  if (type === 'week') {
+    const day = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+    return `report-week-${monday.toLocaleDateString('en-CA')}`;
+  }
+  return `report-month-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
 // Map circled numbers to plain digits for the badge
 const CIRC_TO_DIGIT = { '①':'1','②':'2','③':'3','④':'4','⑤':'5',
                          '⑥':'6','⑦':'7','⑧':'8','⑨':'9','⑩':'10' };
@@ -497,8 +509,31 @@ function renderAIContent(text) {
   return `<div class="ai-content">${parts.join('')}</div>`;
 }
 
-async function runAIAnalysis(type) {
-  const resultEl = document.getElementById('aiResult');
+function renderReportResult(report) {
+  const resultEl  = document.getElementById('aiResult');
+  const typeLabel = report.type === 'week' ? '周报' : '月报';
+  const time      = new Date(report.generatedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  resultEl.innerHTML = `
+    <div class="ai-meta">
+      <span class="ai-type-badge">${typeLabel}</span>
+      <span class="ai-date">${report.label} · ${time} 生成</span>
+      <button class="ai-regen-btn" data-type="${report.type}">重新生成</button>
+    </div>
+    ${renderAIContent(report.content)}`;
+  resultEl.querySelector('.ai-regen-btn')
+    .addEventListener('click', e => runAIAnalysis(e.target.dataset.type, true));
+}
+
+async function runAIAnalysis(type, force = false) {
+  const resultEl  = document.getElementById('aiResult');
+  const reportKey = getReportKey(type);
+
+  // Return cached report unless user explicitly asked to regenerate
+  if (!force) {
+    const saved = await chrome.storage.local.get(reportKey);
+    if (saved[reportKey]) { renderReportResult(saved[reportKey]); return; }
+  }
+
   document.querySelectorAll('.ai-btn').forEach(b => b.disabled = true);
   resultEl.innerHTML = '<div class="ai-empty">生成中，稍等…</div>';
 
@@ -541,15 +576,11 @@ async function runAIAnalysis(type) {
     return;
   }
 
-  const typeLabel = type === 'week' ? '周报' : '月报';
-  const time      = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-  resultEl.innerHTML = `
-    <div class="ai-meta">
-      <span class="ai-type-badge">${typeLabel}</span>
-      <span class="ai-date">${label} · ${time} 生成</span>
-    </div>
-    ${renderAIContent(content)}`;
+  // Persist so it survives refresh
+  const report = { type, label, generatedAt: Date.now(), content };
+  await chrome.storage.local.set({ [reportKey]: report });
 
+  renderReportResult(report);
   document.querySelectorAll('.ai-btn').forEach(b => b.disabled = false);
 }
 
@@ -728,6 +759,10 @@ async function init() {
     if (chrome.runtime.lastError) console.warn('flush:', chrome.runtime.lastError.message);
     refresh();
   });
+  // Auto-display this week's saved report (if background already generated it)
+  const weekKey = getReportKey('week');
+  const saved   = await chrome.storage.local.get(weekKey);
+  if (saved[weekKey]) renderReportResult(saved[weekKey]);
 }
 
 init();
