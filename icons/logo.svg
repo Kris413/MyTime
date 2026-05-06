@@ -1,12 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
   <!-- Background: indigo rounded square -->
   <rect width="128" height="128" rx="28" fill="#6366F1"/>
-  <!-- Clock face ring -->
-  <circle cx="64" cy="64" r="38" stroke="rgba(255,255,255,0.55)" stroke-width="5" fill="none"/>
-  <!-- Minute hand: pointing to 12 -->
-  <line x1="64" y1="64" x2="64" y2="30" stroke="white" stroke-width="8" stroke-linecap="round"/>
-  <!-- Hour hand: pointing to 3 (shorter) -->
-  <line x1="64" y1="64" x2="91" y2="64" stroke="white" stroke-width="8" stroke-linecap="round"/>
-  <!-- Center dot -->
-  <circle cx="64" cy="64" r="7" fill="white"/>
+
+  <!-- Blob body: organic amber shape -->
+  <path d="M64 20 C83 17,102 33,102 55 C102 77,85 98,64 99 C43 100,24 82,24 60 C24 36,43 23,64 20Z" fill="#FFBB26"/>
+
+  <!-- Left eye -->
+  <circle cx="47" cy="47" r="7" fill="#2c2b2a"/>
+  <circle cx="49.5" cy="44.5" r="2.8" fill="white"/>
+
+  <!-- Right eye -->
+  <circle cx="81" cy="47" r="7" fill="#2c2b2a"/>
+  <circle cx="83.5" cy="44.5" r="2.8" fill="white"/>
+
+  <!-- Clock hands — center 64, 63 -->
+  <line x1="64" y1="63" x2="64" y2="35" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <line x1="64" y1="63" x2="91" y2="63" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="64" cy="63" r="7" fill="white"/>
+
+  <!-- Smile -->
+  <path d="M46 81 Q64 95 82 81" stroke="#2c2b2a" stroke-width="4.5" stroke-linecap="round" fill="none"/>
 </svg>
