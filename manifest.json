@@ -3,7 +3,7 @@
   "name": "MyTime",
   "version": "1.0.0",
   "description": "记录和分析你的浏览器使用时间",
-  "permissions": ["tabs", "storage", "alarms", "notifications"],
+  "permissions": ["tabs", "storage", "alarms", "notifications", "idle"],
   "host_permissions": [
     "https://www.brainboom.top/*",
     "https://dashscope.aliyuncs.com/*"

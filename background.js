@@ -313,16 +313,58 @@ function scheduleWeeklyAlarm() {
 }
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'heartbeat')    await flushCurrentSession();
   if (alarm.name === 'dailyReport')  await generateDailyReport();
   if (alarm.name === 'weeklyReport') await generateWeeklyReport();
 });
 
+// ── Heartbeat ────────────────────────────────────────────────────────────────
+// Flush the running session every 2 minutes so a SW restart never accumulates
+// more than ~2 minutes of stale time.
+
+function scheduleHeartbeat() {
+  chrome.alarms.create('heartbeat', { periodInMinutes: 2 });
+}
+
+// ── Idle / sleep / lock detection ────────────────────────────────────────────
+// Treat 2 minutes of system inactivity as "screen gone" — stop the timer.
+// When the user comes back (state → 'active'), restart tracking on whatever
+// window/tab is in the foreground at that moment.
+
+chrome.idle.setDetectionInterval(120); // 2 minutes
+
+chrome.idle.onStateChanged.addListener(async (newState) => {
+  if (newState === 'idle' || newState === 'locked') {
+    await stopTracking();
+  } else if (newState === 'active') {
+    try {
+      const windows = await chrome.windows.getAll();
+      const focused = windows.find(w => w.focused && w.state !== 'minimized');
+      if (focused) {
+        const [tab] = await chrome.tabs.query({ active: true, windowId: focused.id });
+        if (tab) await startTracking(tab);
+      }
+    } catch {}
+  }
+});
+
 // ── Init ──────────────────────────────────────────────────────────────────────
+
+// Max elapsed time we're willing to trust from a restored session.
+// If the SW was suspended for longer (e.g. during sleep), discard the session.
+const STALE_THRESHOLD_MS = 8 * 60 * 1000; // 8 minutes
 
 (async () => {
   try {
     const { activeTab: saved } = await chrome.storage.session.get('activeTab');
-    if (saved) await saveElapsed(saved.domain, saved.startTime, saved.title || '');
+    if (saved) {
+      const elapsed = Date.now() - saved.startTime;
+      if (elapsed <= STALE_THRESHOLD_MS) {
+        // Session is fresh enough — save the elapsed time as legitimate usage
+        await saveElapsed(saved.domain, saved.startTime, saved.title || '');
+      }
+      // If elapsed > threshold (e.g. woke from sleep), silently discard
+    }
     // Only start tracking if a Chrome window is actually in the foreground.
     // `lastFocusedWindow` returns the last-used window even when Chrome has no
     // OS focus (e.g. user is on another Space / macOS desktop), so we use
@@ -336,4 +378,5 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   } catch {}
   scheduleDailyAlarm();
   scheduleWeeklyAlarm();
+  scheduleHeartbeat();
 })();
